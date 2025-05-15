@@ -44,6 +44,7 @@ Partial Class MainForm
         ClassroomToolStripMenuItem1 = New ToolStripMenuItem()
         SubjectToolStripMenuItem2 = New ToolStripMenuItem()
         SectionToolStripMenuItem1 = New ToolStripMenuItem()
+        DashboardToolStripMenuItem = New ToolStripMenuItem()
         GroupBox1 = New GroupBox()
         txtPassword2 = New TextBox()
         lblPassword2 = New Label()
@@ -84,7 +85,7 @@ Partial Class MainForm
         ' 
         ' MenuStrip1
         ' 
-        MenuStrip1.Items.AddRange(New ToolStripItem() {AddToolStripMenuItem, SearchToolStripMenuItem})
+        MenuStrip1.Items.AddRange(New ToolStripItem() {AddToolStripMenuItem, SearchToolStripMenuItem, DashboardToolStripMenuItem})
         MenuStrip1.Location = New Point(0, 0)
         MenuStrip1.Name = "MenuStrip1"
         MenuStrip1.Size = New Size(802, 24)
@@ -204,6 +205,12 @@ Partial Class MainForm
         SectionToolStripMenuItem1.Name = "SectionToolStripMenuItem1"
         SectionToolStripMenuItem1.Size = New Size(130, 22)
         SectionToolStripMenuItem1.Text = "Section"
+        ' 
+        ' DashboardToolStripMenuItem
+        ' 
+        DashboardToolStripMenuItem.Name = "DashboardToolStripMenuItem"
+        DashboardToolStripMenuItem.Size = New Size(76, 20)
+        DashboardToolStripMenuItem.Text = "Dashboard"
         ' 
         ' GroupBox1
         ' 
@@ -524,5 +531,6 @@ Partial Class MainForm
     Friend WithEvents cmbGradeLevel As ComboBox
     Friend WithEvents Label6 As Label
     Friend WithEvents Label5 As Label
+    Friend WithEvents DashboardToolStripMenuItem As ToolStripMenuItem
 
 End Class

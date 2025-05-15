@@ -21,11 +21,7 @@ Public Class MainForm
             Controls.Remove(currentControl)
         End If
 
-        ' Option 2 (recommended): Use a dedicated panel (for example, pnlMain)
-        ' If you have a dedicated panel, use:
-        ' pnlMain.Controls.Clear()
-        ' pnlMain.Controls.Add(newControl)
-        ' newControl.Dock = DockStyle.Fill
+
 
         ' Set new UserControl for this example using the MainForm itself:
         currentControl = newControl
@@ -722,4 +718,40 @@ Public Class MainForm
         LoadEnrollmentChart()
     End Sub
 
+    Private Sub MenuStrip1_ItemClicked(sender As Object, e As ToolStripItemClickedEventArgs) Handles MenuStrip1.ItemClicked
+
+    End Sub
+
+    Private Sub DashboardToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles DashboardToolStripMenuItem.Click
+        GroupBox1.Hide()
+
+        MenuStrip1.Visible = True
+
+        Label3.Visible = True
+        dgvStudent.Visible = True
+        SetPagingLimits()  ' Sets up the NumericUpDown limits
+        LoadStudentData(1)
+        NumericUpDown1.Visible = True
+
+
+        Label4.Visible = True
+        dgvTeachers.Visible = True
+        NumericUpDown2.Visible = True
+        LoadTeacherData(1)
+
+        LoadSections()
+        LoadGradeLevels()
+        LoadEnrollmentChart()
+
+
+        Panel1.Visible = True
+        Panel2.Visible = True
+        Panel3.Visible = True
+        Panel4.Visible = True
+
+        If currentControl IsNot Nothing AndAlso currentControl.Visible Then
+            currentControl.Hide()
+        End If
+
+    End Sub
 End Class

@@ -24,6 +24,7 @@ Partial Class PersonForm
     Private Sub InitializeComponent()
         pnlStudent = New Panel()
         GroupBox1 = New GroupBox()
+        btnBack = New Button()
         LinkLabel2 = New LinkLabel()
         LinkLabel1 = New LinkLabel()
         btnDeleteStudent = New Button()
@@ -59,7 +60,11 @@ Partial Class PersonForm
         Label4 = New Label()
         Label3 = New Label()
         Label2 = New Label()
-        lblpdname = New Label()
+        pnlPersonDetails = New Panel()
+        Button1 = New Button()
+        btnSearchPerson = New Button()
+        txtSearchPerson = New TextBox()
+        lblsearch = New Label()
         lblGB = New GroupBox()
         btnDeletepd = New Button()
         btnEditpd = New Button()
@@ -80,15 +85,11 @@ Partial Class PersonForm
         Label18 = New Label()
         Label19 = New Label()
         Label20 = New Label()
-        lblsearch = New Label()
-        txtSearchPerson = New TextBox()
-        btnSearchPerson = New Button()
-        btnBack = New Button()
-        pnlPersonDetails = New Panel()
+        lblpdname = New Label()
         pnlStudent.SuspendLayout()
         GroupBox1.SuspendLayout()
-        lblGB.SuspendLayout()
         pnlPersonDetails.SuspendLayout()
+        lblGB.SuspendLayout()
         SuspendLayout()
         ' 
         ' pnlStudent
@@ -104,6 +105,7 @@ Partial Class PersonForm
         ' GroupBox1
         ' 
         GroupBox1.Anchor = AnchorStyles.None
+        GroupBox1.Controls.Add(btnBack)
         GroupBox1.Controls.Add(LinkLabel2)
         GroupBox1.Controls.Add(LinkLabel1)
         GroupBox1.Controls.Add(btnDeleteStudent)
@@ -145,6 +147,16 @@ Partial Class PersonForm
         GroupBox1.TabIndex = 32
         GroupBox1.TabStop = False
         GroupBox1.Text = "Enrollment Form"
+        ' 
+        ' btnBack
+        ' 
+        btnBack.Anchor = AnchorStyles.Top Or AnchorStyles.Right
+        btnBack.Location = New Point(563, 0)
+        btnBack.Name = "btnBack"
+        btnBack.Size = New Size(75, 23)
+        btnBack.TabIndex = 41
+        btnBack.Text = "Back"
+        btnBack.UseVisualStyleBackColor = True
         ' 
         ' LinkLabel2
         ' 
@@ -476,15 +488,55 @@ Partial Class PersonForm
         Label2.TabIndex = 1
         Label2.Text = "First Name:"
         ' 
-        ' lblpdname
+        ' pnlPersonDetails
         ' 
-        lblpdname.AutoSize = True
-        lblpdname.Dock = DockStyle.Fill
-        lblpdname.Location = New Point(10, 10)
-        lblpdname.Name = "lblpdname"
-        lblpdname.Size = New Size(106, 15)
-        lblpdname.TabIndex = 23
-        lblpdname.Text = "Add Teacher Form:"
+        pnlPersonDetails.BackColor = SystemColors.AppWorkspace
+        pnlPersonDetails.Controls.Add(Button1)
+        pnlPersonDetails.Controls.Add(btnSearchPerson)
+        pnlPersonDetails.Controls.Add(txtSearchPerson)
+        pnlPersonDetails.Controls.Add(lblsearch)
+        pnlPersonDetails.Controls.Add(lblGB)
+        pnlPersonDetails.Controls.Add(lblpdname)
+        pnlPersonDetails.Dock = DockStyle.Fill
+        pnlPersonDetails.Location = New Point(20, 20)
+        pnlPersonDetails.Name = "pnlPersonDetails"
+        pnlPersonDetails.Padding = New Padding(10)
+        pnlPersonDetails.Size = New Size(665, 433)
+        pnlPersonDetails.TabIndex = 50
+        ' 
+        ' Button1
+        ' 
+        Button1.Location = New Point(10, 397)
+        Button1.Name = "Button1"
+        Button1.Size = New Size(48, 23)
+        Button1.TabIndex = 35
+        Button1.Text = "Back"
+        Button1.UseVisualStyleBackColor = True
+        ' 
+        ' btnSearchPerson
+        ' 
+        btnSearchPerson.Location = New Point(290, 31)
+        btnSearchPerson.Name = "btnSearchPerson"
+        btnSearchPerson.Size = New Size(23, 23)
+        btnSearchPerson.TabIndex = 34
+        btnSearchPerson.Text = "Q"
+        btnSearchPerson.UseVisualStyleBackColor = True
+        ' 
+        ' txtSearchPerson
+        ' 
+        txtSearchPerson.Location = New Point(184, 31)
+        txtSearchPerson.Name = "txtSearchPerson"
+        txtSearchPerson.Size = New Size(100, 23)
+        txtSearchPerson.TabIndex = 33
+        ' 
+        ' lblsearch
+        ' 
+        lblsearch.AutoSize = True
+        lblsearch.Location = New Point(173, 79)
+        lblsearch.Name = "lblsearch"
+        lblsearch.Size = New Size(45, 15)
+        lblsearch.TabIndex = 32
+        lblsearch.Text = "Search:"
         ' 
         ' lblGB
         ' 
@@ -672,55 +724,15 @@ Partial Class PersonForm
         Label20.TabIndex = 13
         Label20.Text = "First Name:"
         ' 
-        ' lblsearch
+        ' lblpdname
         ' 
-        lblsearch.AutoSize = True
-        lblsearch.Location = New Point(163, 69)
-        lblsearch.Name = "lblsearch"
-        lblsearch.Size = New Size(45, 15)
-        lblsearch.TabIndex = 32
-        lblsearch.Text = "Search:"
-        ' 
-        ' txtSearchPerson
-        ' 
-        txtSearchPerson.Location = New Point(184, 31)
-        txtSearchPerson.Name = "txtSearchPerson"
-        txtSearchPerson.Size = New Size(100, 23)
-        txtSearchPerson.TabIndex = 33
-        ' 
-        ' btnSearchPerson
-        ' 
-        btnSearchPerson.Location = New Point(290, 31)
-        btnSearchPerson.Name = "btnSearchPerson"
-        btnSearchPerson.Size = New Size(23, 23)
-        btnSearchPerson.TabIndex = 34
-        btnSearchPerson.Text = "Q"
-        btnSearchPerson.UseVisualStyleBackColor = True
-        ' 
-        ' btnBack
-        ' 
-        btnBack.Location = New Point(10, 397)
-        btnBack.Name = "btnBack"
-        btnBack.Size = New Size(48, 23)
-        btnBack.TabIndex = 35
-        btnBack.Text = "Back"
-        btnBack.UseVisualStyleBackColor = True
-        ' 
-        ' pnlPersonDetails
-        ' 
-        pnlPersonDetails.BackColor = SystemColors.AppWorkspace
-        pnlPersonDetails.Controls.Add(btnBack)
-        pnlPersonDetails.Controls.Add(btnSearchPerson)
-        pnlPersonDetails.Controls.Add(txtSearchPerson)
-        pnlPersonDetails.Controls.Add(lblsearch)
-        pnlPersonDetails.Controls.Add(lblGB)
-        pnlPersonDetails.Controls.Add(lblpdname)
-        pnlPersonDetails.Dock = DockStyle.Fill
-        pnlPersonDetails.Location = New Point(20, 20)
-        pnlPersonDetails.Name = "pnlPersonDetails"
-        pnlPersonDetails.Padding = New Padding(10)
-        pnlPersonDetails.Size = New Size(665, 433)
-        pnlPersonDetails.TabIndex = 49
+        lblpdname.AutoSize = True
+        lblpdname.Dock = DockStyle.Fill
+        lblpdname.Location = New Point(10, 10)
+        lblpdname.Name = "lblpdname"
+        lblpdname.Size = New Size(106, 15)
+        lblpdname.TabIndex = 23
+        lblpdname.Text = "Add Teacher Form:"
         ' 
         ' PersonForm
         ' 
@@ -734,10 +746,10 @@ Partial Class PersonForm
         pnlStudent.ResumeLayout(False)
         GroupBox1.ResumeLayout(False)
         GroupBox1.PerformLayout()
-        lblGB.ResumeLayout(False)
-        lblGB.PerformLayout()
         pnlPersonDetails.ResumeLayout(False)
         pnlPersonDetails.PerformLayout()
+        lblGB.ResumeLayout(False)
+        lblGB.PerformLayout()
         ResumeLayout(False)
     End Sub
 
@@ -778,7 +790,12 @@ Partial Class PersonForm
     Friend WithEvents lblSearchStudent As Label
     Friend WithEvents LinkLabel2 As LinkLabel
     Friend WithEvents LinkLabel1 As LinkLabel
-    Friend WithEvents lblpdname As Label
+    Friend WithEvents btnBack As Button
+    Friend WithEvents pnlPersonDetails As Panel
+    Friend WithEvents Button1 As Button
+    Friend WithEvents btnSearchPerson As Button
+    Friend WithEvents txtSearchPerson As TextBox
+    Friend WithEvents lblsearch As Label
     Friend WithEvents lblGB As GroupBox
     Friend WithEvents btnDeletepd As Button
     Friend WithEvents btnEditpd As Button
@@ -799,10 +816,6 @@ Partial Class PersonForm
     Friend WithEvents Label18 As Label
     Friend WithEvents Label19 As Label
     Friend WithEvents Label20 As Label
-    Friend WithEvents lblsearch As Label
-    Friend WithEvents txtSearchPerson As TextBox
-    Friend WithEvents btnSearchPerson As Button
-    Friend WithEvents btnBack As Button
-    Friend WithEvents pnlPersonDetails As Panel
+    Friend WithEvents lblpdname As Label
 
 End Class

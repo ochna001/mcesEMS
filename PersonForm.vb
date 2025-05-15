@@ -100,6 +100,7 @@ Public Class PersonForm
     End Sub
 
     Private Sub btnEditpd_Click(sender As Object, e As EventArgs) Handles btnEditpd.Click
+
         ToggleFields(True)
     End Sub
 
@@ -1026,6 +1027,7 @@ Public Class PersonForm
 
     ' Delete-------------------------
     Private Sub btnDeletepd_Click(sender As Object, e As EventArgs) Handles btnDeletepd.Click
+
         ' Ensure a valid ID exists before proceeding
         If String.IsNullOrEmpty(selectedPersonID) Then
             MsgBox("No person selected for deletion. Please search first.")
@@ -1559,8 +1561,10 @@ Public Class PersonForm
 
 
     Private Sub btnBack_Click(sender As Object, e As EventArgs) Handles btnBack.Click
-        pnlPersonDetails.Hide()
+        pnlStudent.Hide()
     End Sub
 
-
+    Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
+        pnlPersonDetails.Hide()
+    End Sub
 End Class
