@@ -41,7 +41,17 @@ Partial Class MainForm
         ClassroomToolStripMenuItem1 = New ToolStripMenuItem()
         SubjectToolStripMenuItem2 = New ToolStripMenuItem()
         SectionToolStripMenuItem1 = New ToolStripMenuItem()
+        GroupBox1 = New GroupBox()
+        Button1 = New Button()
+        txtPassword = New TextBox()
+        txtAdminName = New TextBox()
+        Label2 = New Label()
+        Label1 = New Label()
+        LinkLabel1 = New LinkLabel()
+        txtPassword2 = New TextBox()
+        lblPassword2 = New Label()
         MenuStrip1.SuspendLayout()
+        GroupBox1.SuspendLayout()
         SuspendLayout()
         ' 
         ' MenuStrip1
@@ -121,32 +131,32 @@ Partial Class MainForm
         ' 
         SPersonToolStripMenuItem1.DropDownItems.AddRange(New ToolStripItem() {searchStudentToolStripMenuItem2, searchTeacherToolStripMenuItem1, searchParentGuardianToolStripMenuItem1})
         SPersonToolStripMenuItem1.Name = "SPersonToolStripMenuItem1"
-        SPersonToolStripMenuItem1.Size = New Size(180, 22)
+        SPersonToolStripMenuItem1.Size = New Size(178, 22)
         SPersonToolStripMenuItem1.Text = "Person"
         ' 
         ' searchStudentToolStripMenuItem2
         ' 
         searchStudentToolStripMenuItem2.Name = "searchStudentToolStripMenuItem2"
-        searchStudentToolStripMenuItem2.Size = New Size(180, 22)
+        searchStudentToolStripMenuItem2.Size = New Size(161, 22)
         searchStudentToolStripMenuItem2.Text = "Student"
         ' 
         ' searchTeacherToolStripMenuItem1
         ' 
         searchTeacherToolStripMenuItem1.Name = "searchTeacherToolStripMenuItem1"
-        searchTeacherToolStripMenuItem1.Size = New Size(180, 22)
+        searchTeacherToolStripMenuItem1.Size = New Size(161, 22)
         searchTeacherToolStripMenuItem1.Text = "Teacher"
         ' 
         ' searchParentGuardianToolStripMenuItem1
         ' 
         searchParentGuardianToolStripMenuItem1.Name = "searchParentGuardianToolStripMenuItem1"
-        searchParentGuardianToolStripMenuItem1.Size = New Size(180, 22)
+        searchParentGuardianToolStripMenuItem1.Size = New Size(161, 22)
         searchParentGuardianToolStripMenuItem1.Text = "Parent/Guardian"
         ' 
         ' SAcademicStructureToolStripMenuItem
         ' 
         SAcademicStructureToolStripMenuItem.DropDownItems.AddRange(New ToolStripItem() {ClassroomToolStripMenuItem1, SubjectToolStripMenuItem2, SectionToolStripMenuItem1})
         SAcademicStructureToolStripMenuItem.Name = "SAcademicStructureToolStripMenuItem"
-        SAcademicStructureToolStripMenuItem.Size = New Size(180, 22)
+        SAcademicStructureToolStripMenuItem.Size = New Size(178, 22)
         SAcademicStructureToolStripMenuItem.Text = "Academic Structure"
         ' 
         ' ClassroomToolStripMenuItem1
@@ -167,18 +177,104 @@ Partial Class MainForm
         SectionToolStripMenuItem1.Size = New Size(130, 22)
         SectionToolStripMenuItem1.Text = "Section"
         ' 
+        ' GroupBox1
+        ' 
+        GroupBox1.Controls.Add(txtPassword2)
+        GroupBox1.Controls.Add(lblPassword2)
+        GroupBox1.Controls.Add(LinkLabel1)
+        GroupBox1.Controls.Add(Button1)
+        GroupBox1.Controls.Add(txtPassword)
+        GroupBox1.Controls.Add(txtAdminName)
+        GroupBox1.Controls.Add(Label2)
+        GroupBox1.Controls.Add(Label1)
+        GroupBox1.Location = New Point(236, 42)
+        GroupBox1.Name = "GroupBox1"
+        GroupBox1.Size = New Size(328, 363)
+        GroupBox1.TabIndex = 1
+        GroupBox1.TabStop = False
+        ' 
+        ' Button1
+        ' 
+        Button1.Location = New Point(107, 246)
+        Button1.Name = "Button1"
+        Button1.Size = New Size(123, 55)
+        Button1.TabIndex = 4
+        Button1.Text = "Login"
+        Button1.UseVisualStyleBackColor = True
+        ' 
+        ' txtPassword
+        ' 
+        txtPassword.Location = New Point(149, 147)
+        txtPassword.Name = "txtPassword"
+        txtPassword.Size = New Size(100, 23)
+        txtPassword.TabIndex = 3
+        ' 
+        ' txtAdminName
+        ' 
+        txtAdminName.Location = New Point(149, 88)
+        txtAdminName.Name = "txtAdminName"
+        txtAdminName.Size = New Size(100, 23)
+        txtAdminName.TabIndex = 2
+        ' 
+        ' Label2
+        ' 
+        Label2.AutoSize = True
+        Label2.Location = New Point(67, 147)
+        Label2.Name = "Label2"
+        Label2.Size = New Size(60, 15)
+        Label2.TabIndex = 1
+        Label2.Text = "Password:"
+        ' 
+        ' Label1
+        ' 
+        Label1.AutoSize = True
+        Label1.Location = New Point(67, 88)
+        Label1.Name = "Label1"
+        Label1.Size = New Size(63, 15)
+        Label1.TabIndex = 0
+        Label1.Text = "Username:"
+        ' 
+        ' LinkLabel1
+        ' 
+        LinkLabel1.AutoSize = True
+        LinkLabel1.Location = New Point(117, 315)
+        LinkLabel1.Name = "LinkLabel1"
+        LinkLabel1.Size = New Size(104, 15)
+        LinkLabel1.TabIndex = 5
+        LinkLabel1.TabStop = True
+        LinkLabel1.Text = "Add New Account"
+        ' 
+        ' txtPassword2
+        ' 
+        txtPassword2.Location = New Point(149, 199)
+        txtPassword2.Name = "txtPassword2"
+        txtPassword2.Size = New Size(100, 23)
+        txtPassword2.TabIndex = 7
+        ' 
+        ' lblPassword2
+        ' 
+        lblPassword2.AutoSize = True
+        lblPassword2.Location = New Point(67, 199)
+        lblPassword2.Name = "lblPassword2"
+        lblPassword2.Size = New Size(60, 15)
+        lblPassword2.TabIndex = 6
+        lblPassword2.Text = "Password:"
+        ' 
         ' MainForm
         ' 
         AutoScaleDimensions = New SizeF(7F, 15F)
         AutoScaleMode = AutoScaleMode.Font
         BackColor = SystemColors.ActiveBorder
         ClientSize = New Size(800, 450)
+        Controls.Add(GroupBox1)
         Controls.Add(MenuStrip1)
         MainMenuStrip = MenuStrip1
         Name = "MainForm"
         Text = "MCES Enrollment MS"
         MenuStrip1.ResumeLayout(False)
         MenuStrip1.PerformLayout()
+        GroupBox1.ResumeLayout(False)
+        GroupBox1.PerformLayout()
         ResumeLayout(False)
         PerformLayout()
     End Sub
@@ -202,5 +298,14 @@ Partial Class MainForm
     Friend WithEvents ClassroomToolStripMenuItem1 As ToolStripMenuItem
     Friend WithEvents SubjectToolStripMenuItem2 As ToolStripMenuItem
     Friend WithEvents SectionToolStripMenuItem1 As ToolStripMenuItem
+    Friend WithEvents GroupBox1 As GroupBox
+    Friend WithEvents Button1 As Button
+    Friend WithEvents txtPassword As TextBox
+    Friend WithEvents txtAdminName As TextBox
+    Friend WithEvents Label2 As Label
+    Friend WithEvents Label1 As Label
+    Friend WithEvents LinkLabel1 As LinkLabel
+    Friend WithEvents txtPassword2 As TextBox
+    Friend WithEvents lblPassword2 As Label
 
 End Class
