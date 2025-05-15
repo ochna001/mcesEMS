@@ -7,7 +7,7 @@ Module Module1
     Public db_server As String = "localhost"
     Public db_uid As String = "root"
     Public db_pwd As String = ""
-    Public db_name As String = "mcesdb_test"
+    Public db_name As String = "mcesdb_test2"
     Public strconnection As String = "server = " & db_server & "; uid =" & db_uid & "; password =" & db_pwd & "; database =" & db_name & ""
     Public Sub opencon(ByVal db_name As String)
         Try

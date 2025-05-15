@@ -486,6 +486,15 @@ Public Class PersonForm
                 End Using
             Next
 
+            ' 6. Update section totals
+            Dim sqlUpdateSection As String = "UPDATE Section SET Total_Students = (SELECT COUNT(*) FROM belongs_to WHERE Section_ID = " & cmbSection.SelectedValue.ToString() & ") " &
+                "WHERE Section_ID = " & cmbSection.SelectedValue.ToString()
+            readquery(sqlUpdateSection)
+            If cmdread IsNot Nothing Then cmdread.Close()
+
+            ' 7. Update overall grade level totals
+            UpdateTotalStudents()
+
             ' Step 6: Upload file if a file was selected
             If selectedFileData IsNot Nothing AndAlso Not String.IsNullOrEmpty(selectedFileName) Then
                 UploadStudentFile(studentID, selectedFileName, selectedFileData)
