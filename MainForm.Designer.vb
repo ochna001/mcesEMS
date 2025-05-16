@@ -55,7 +55,6 @@ Partial Class MainForm
         Label2 = New Label()
         Label1 = New Label()
         Panel1 = New Panel()
-        NumericUpDown1 = New NumericUpDown()
         dgvStudent = New DataGridView()
         Label3 = New Label()
         Panel2 = New Panel()
@@ -70,10 +69,10 @@ Partial Class MainForm
         cmbGradeLevel = New ComboBox()
         Label6 = New Label()
         Label5 = New Label()
+        NumericUpDown1 = New NumericUpDown()
         MenuStrip1.SuspendLayout()
         GroupBox1.SuspendLayout()
         Panel1.SuspendLayout()
-        CType(NumericUpDown1, ComponentModel.ISupportInitialize).BeginInit()
         CType(dgvStudent, ComponentModel.ISupportInitialize).BeginInit()
         Panel2.SuspendLayout()
         CType(NumericUpDown2, ComponentModel.ISupportInitialize).BeginInit()
@@ -81,6 +80,7 @@ Partial Class MainForm
         Panel3.SuspendLayout()
         CType(Chart1, ComponentModel.ISupportInitialize).BeginInit()
         Panel4.SuspendLayout()
+        CType(NumericUpDown1, ComponentModel.ISupportInitialize).BeginInit()
         SuspendLayout()
         ' 
         ' MenuStrip1
@@ -306,14 +306,6 @@ Partial Class MainForm
         Panel1.Size = New Size(802, 270)
         Panel1.TabIndex = 8
         ' 
-        ' NumericUpDown1
-        ' 
-        NumericUpDown1.Anchor = AnchorStyles.Top Or AnchorStyles.Right
-        NumericUpDown1.Location = New Point(642, 20)
-        NumericUpDown1.Name = "NumericUpDown1"
-        NumericUpDown1.Size = New Size(120, 23)
-        NumericUpDown1.TabIndex = 7
-        ' 
         ' dgvStudent
         ' 
         dgvStudent.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize
@@ -328,7 +320,7 @@ Partial Class MainForm
         Label3.AutoSize = True
         Label3.Location = New Point(14, 29)
         Label3.Name = "Label3"
-        Label3.Size = New Size(81, 15)
+        Label3.Size = New Size(82, 15)
         Label3.TabIndex = 5
         Label3.Text = "Student Table:"
         ' 
@@ -364,7 +356,7 @@ Partial Class MainForm
         Label4.AutoSize = True
         Label4.Location = New Point(14, 25)
         Label4.Name = "Label4"
-        Label4.Size = New Size(85, 15)
+        Label4.Size = New Size(87, 15)
         Label4.TabIndex = 8
         Label4.Text = "Teachers Table:"
         ' 
@@ -451,6 +443,14 @@ Partial Class MainForm
         Label5.TabIndex = 4
         Label5.Text = "Section:"
         ' 
+        ' NumericUpDown1
+        ' 
+        NumericUpDown1.Anchor = AnchorStyles.Top Or AnchorStyles.Right
+        NumericUpDown1.Location = New Point(642, 20)
+        NumericUpDown1.Name = "NumericUpDown1"
+        NumericUpDown1.Size = New Size(120, 23)
+        NumericUpDown1.TabIndex = 7
+        ' 
         ' MainForm
         ' 
         AutoScaleDimensions = New SizeF(7F, 15F)
@@ -473,7 +473,6 @@ Partial Class MainForm
         GroupBox1.PerformLayout()
         Panel1.ResumeLayout(False)
         Panel1.PerformLayout()
-        CType(NumericUpDown1, ComponentModel.ISupportInitialize).EndInit()
         CType(dgvStudent, ComponentModel.ISupportInitialize).EndInit()
         Panel2.ResumeLayout(False)
         Panel2.PerformLayout()
@@ -483,6 +482,7 @@ Partial Class MainForm
         CType(Chart1, ComponentModel.ISupportInitialize).EndInit()
         Panel4.ResumeLayout(False)
         Panel4.PerformLayout()
+        CType(NumericUpDown1, ComponentModel.ISupportInitialize).EndInit()
         ResumeLayout(False)
         PerformLayout()
     End Sub
@@ -516,7 +516,6 @@ Partial Class MainForm
     Friend WithEvents txtPassword2 As TextBox
     Friend WithEvents lblPassword2 As Label
     Friend WithEvents Panel1 As Panel
-    Friend WithEvents NumericUpDown1 As NumericUpDown
     Friend WithEvents dgvStudent As DataGridView
     Friend WithEvents Label3 As Label
     Friend WithEvents Panel2 As Panel
@@ -532,5 +531,6 @@ Partial Class MainForm
     Friend WithEvents Label6 As Label
     Friend WithEvents Label5 As Label
     Friend WithEvents DashboardToolStripMenuItem As ToolStripMenuItem
+    Friend WithEvents NumericUpDown1 As NumericUpDown
 
 End Class

@@ -107,9 +107,25 @@ Public Class MainForm
         dgvStudent.Visible = False
         NumericUpDown1.Visible = False
 
+        ' Initialize NumericUpDown1 properties
+        NumericUpDown1.Minimum = 1
+        NumericUpDown1.Maximum = 1
+        NumericUpDown1.Value = 1
+        NumericUpDown1.ReadOnly = False
+        NumericUpDown1.Enabled = True
+        ' Explicitly attach the event handler
+        AddHandler NumericUpDown1.ValueChanged, AddressOf NumericUpDown1_ValueChanged
+
         Label4.Visible = False
         dgvTeachers.Visible = False
         NumericUpDown2.Visible = False
+        ' Same initialization for NumericUpDown2
+        NumericUpDown2.Minimum = 1
+        NumericUpDown2.Maximum = 1
+        NumericUpDown2.Value = 1
+        NumericUpDown2.ReadOnly = False
+        NumericUpDown2.Enabled = True
+        AddHandler NumericUpDown2.ValueChanged, AddressOf NumericUpDown2_ValueChanged
 
         Panel1.Visible = False
         Panel2.Visible = False
@@ -179,33 +195,39 @@ Public Class MainForm
             RegisterUser(txtAdminName.Text.Trim(), txtPassword.Text.Trim(), txtPassword2.Text.Trim())
         Else
             ' Attempt login
-            AuthenticateUser(txtAdminName.Text.Trim(), txtPassword.Text.Trim())
-            GroupBox1.Hide()
+            If AuthenticateUser(txtAdminName.Text.Trim(), txtPassword.Text.Trim()) Then
+                GroupBox1.Hide()
+                MenuStrip1.Visible = True
 
-            MenuStrip1.Visible = True
+                ' First set up the paginations before showing data
+                SetPagingLimits()
+                SetTeacherPagingLimits()
 
-            Label3.Visible = True
-            dgvStudent.Visible = True
-            SetPagingLimits()  ' Sets up the NumericUpDown limits
-            LoadStudentData(1)
-            NumericUpDown1.Visible = True
+                ' Now set up the UI elements
+                Label3.Visible = True
+                dgvStudent.Visible = True
+                NumericUpDown1.Visible = True
+                NumericUpDown1.Enabled = True
 
+                ' Load initial data (page 1)
+                LoadStudentData(1)
 
-            Label4.Visible = True
-            dgvTeachers.Visible = True
-            NumericUpDown2.Visible = True
-            LoadTeacherData(1)
+                Label4.Visible = True
+                dgvTeachers.Visible = True
+                NumericUpDown2.Visible = True
+                LoadTeacherData(1)
 
-            LoadSections()
-            LoadGradeLevels()
-            LoadEnrollmentChart()
+                LoadSections()
+                LoadGradeLevels()
+                LoadEnrollmentChart()
 
-
-            Panel1.Visible = True
-            Panel2.Visible = True
-            Panel3.Visible = True
-            Panel4.Visible = True
-
+                Panel1.Visible = True
+                Panel2.Visible = True
+                Panel3.Visible = True
+                Panel4.Visible = True
+            Else
+                MessageBox.Show("Invalid username or password. Please try again.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            End If
         End If
     End Sub
 
@@ -299,28 +321,28 @@ Public Class MainForm
             ' Open MySQL connection using your existing opencon() method.
             opencon(db_name)
 
-            Dim pageSize As Integer = 20
+            Dim pageSize As Integer = 10
             Dim offset As Integer = (page - 1) * pageSize
 
-            ' SQL query with joins based on your ERD and added pagination.
-            Dim query As String = "SELECT " &
-            "s.Student_ID, " &
-            "CONCAT(s.Lname, ', ', s.Fname, ' ', s.Midname) AS StudentName, " &
-            "s.DOB, " &
-            "s.Sex, " &
-            "CONCAT(pg.Lname, ', ', pg.Fname, ' ', pg.Midname) AS ParentGuardian, " &
-            "sec.Section_Name AS Section, " &
-            "gl.Grade_Name AS GradeLevel, " &
-            "r.Submission_Status AS RequirementStatus " &
-            "FROM student s " &
-            "LEFT JOIN belong_to bt ON s.Student_ID = bt.Student_ID " &
-            "LEFT JOIN parent_guardian pg ON bt.Parent_Guardian_ID = pg.Parent_Guardian_ID " &
-            "LEFT JOIN belongs_to bsec ON s.Student_ID = bsec.Student_ID " &
-            "LEFT JOIN section sec ON bsec.Section_ID = sec.Section_ID " &
-            "LEFT JOIN grade_level gl ON s.Grade_Level_ID = gl.Grade_Level_ID " &
-            "LEFT JOIN requirements r ON s.Student_ID = r.Student_ID " &
-            "ORDER BY s.Student_ID " &
-            "LIMIT " & pageSize & " OFFSET " & offset
+            ' Modified SQL query to avoid duplicate rows
+            Dim query As String = "SELECT DISTINCT " &
+        "s.Student_ID, " &
+        "CONCAT(s.Lname, ', ', s.Fname, ' ', s.Midname) AS StudentName, " &
+        "s.DOB, " &
+        "s.Sex, " &
+        "CONCAT(pg.Lname, ', ', pg.Fname, ' ', pg.Midname) AS ParentGuardian, " &
+        "sec.Section_Name AS Section, " &
+        "gl.Grade_Name AS GradeLevel, " &
+        "r.Submission_Status AS RequirementStatus " &
+        "FROM student s " &
+        "LEFT JOIN (SELECT DISTINCT Student_ID, Parent_Guardian_ID FROM belong_to) bt ON s.Student_ID = bt.Student_ID " &
+        "LEFT JOIN parent_guardian pg ON bt.Parent_Guardian_ID = pg.Parent_Guardian_ID " &
+        "LEFT JOIN (SELECT DISTINCT Student_ID, Section_ID FROM belongs_to) bsec ON s.Student_ID = bsec.Student_ID " &
+        "LEFT JOIN section sec ON bsec.Section_ID = sec.Section_ID " &
+        "LEFT JOIN grade_level gl ON s.Grade_Level_ID = gl.Grade_Level_ID " &
+        "LEFT JOIN (SELECT DISTINCT Student_ID, Submission_Status FROM requirements) r ON s.Student_ID = r.Student_ID " &
+        "ORDER BY s.Student_ID " &
+        "LIMIT " & pageSize & " OFFSET " & offset
 
             Dim dt As New DataTable()
             Using adapter As New MySqlDataAdapter(query, conn)
@@ -332,15 +354,15 @@ Public Class MainForm
 
             ' Map the original column names to user-friendly headers.
             Dim friendlyHeaders As New Dictionary(Of String, String) From {
-            {"Student_ID", "Student ID"},
-            {"StudentName", "Student Name"},
-            {"DOB", "Date of Birth"},
-            {"Sex", "Sex"},
-            {"ParentGuardian", "Parent/Guardian"},
-            {"Section", "Section"},
-            {"GradeLevel", "Grade Level"},
-            {"RequirementStatus", "Requirement Status"}
-        }
+        {"Student_ID", "Student ID"},
+        {"StudentName", "Student Name"},
+        {"DOB", "Date of Birth"},
+        {"Sex", "Sex"},
+        {"ParentGuardian", "Parent/Guardian"},
+        {"Section", "Section"},
+        {"GradeLevel", "Grade Level"},
+        {"RequirementStatus", "Requirement Status"}
+    }
 
             ' Loop through the mapping and update the DataGridView headers.
             For Each kvp As KeyValuePair(Of String, String) In friendlyHeaders
@@ -375,7 +397,6 @@ Public Class MainForm
         End Try
     End Sub
 
-
     Private Sub SetPagingLimits()
         Try
             opencon(db_name)
@@ -386,19 +407,34 @@ Public Class MainForm
                 totalRecords = Convert.ToInt32(cmd.ExecuteScalar())
             End Using
 
-            ' Calculate total number of pages, assuming 20 records per page.
-            Dim totalPages As Integer = Math.Ceiling(totalRecords / 20D)
+            ' Calculate total number of pages, assuming 20 records per page
+            Dim totalPages As Integer = Math.Ceiling(totalRecords / 10.0)
+
+            ' Always ensure minimum is 1 and maximum is at least 1
             NumericUpDown1.Minimum = 1
             NumericUpDown1.Maximum = If(totalPages > 0, totalPages, 1)
+
+            ' Make sure current value is within range
+            If NumericUpDown1.Value > NumericUpDown1.Maximum Then
+                NumericUpDown1.Value = NumericUpDown1.Maximum
+            ElseIf NumericUpDown1.Value < NumericUpDown1.Minimum Then
+                NumericUpDown1.Value = NumericUpDown1.Minimum
+            End If
+
+            Debug.WriteLine($"Pagination setup: Total records = {totalRecords}, Total pages = {totalPages}")
+            Debug.WriteLine($"NumericUpDown1: Min = {NumericUpDown1.Minimum}, Max = {NumericUpDown1.Maximum}, Current = {NumericUpDown1.Value}")
+
         Catch ex As Exception
             MessageBox.Show("Error getting total page count: " & ex.Message)
         Finally
             conn.Close()
         End Try
     End Sub
+
     Private Sub NumericUpDown1_ValueChanged(sender As Object, e As EventArgs) Handles NumericUpDown1.ValueChanged
-        ' Get the selected page from NumericUpDown and call LoadStudentData with it.
-        Dim selectedPage As Integer = NumericUpDown1.Value
+        ' Get the selected page from NumericUpDown and call LoadStudentData with it
+        Dim selectedPage As Integer = Convert.ToInt32(NumericUpDown1.Value)
+        Debug.WriteLine($"NumericUpDown1 value changed to: {selectedPage}")
         LoadStudentData(selectedPage)
     End Sub
 
@@ -644,6 +680,41 @@ Public Class MainForm
         End Try
     End Sub
 
+    Private Sub SetTeacherPagingLimits()
+        Try
+            opencon(db_name)
+            Dim countQuery As String = "SELECT COUNT(*) FROM teacher"
+            Dim totalRecords As Integer
+
+            Using cmd As New MySqlCommand(countQuery, conn)
+                totalRecords = Convert.ToInt32(cmd.ExecuteScalar())
+            End Using
+
+            ' Calculate total number of pages, assuming 20 records per page
+            Dim totalPages As Integer = Math.Ceiling(totalRecords / 20.0)
+
+            ' Always ensure minimum is 1 and maximum is at least 1
+            NumericUpDown2.Minimum = 1
+            NumericUpDown2.Maximum = If(totalPages > 0, totalPages, 1)
+
+            ' Make sure current value is within range
+            If NumericUpDown2.Value > NumericUpDown2.Maximum Then
+                NumericUpDown2.Value = NumericUpDown2.Maximum
+            ElseIf NumericUpDown2.Value < NumericUpDown2.Minimum Then
+                NumericUpDown2.Value = NumericUpDown2.Minimum
+            End If
+
+            Debug.WriteLine($"Teacher Pagination setup: Total records = {totalRecords}, Total pages = {totalPages}")
+            Debug.WriteLine($"NumericUpDown2: Min = {NumericUpDown2.Minimum}, Max = {NumericUpDown2.Maximum}, Current = {NumericUpDown2.Value}")
+
+        Catch ex As Exception
+            MessageBox.Show("Error getting teacher total page count: " & ex.Message)
+            Debug.WriteLine($"Error in SetTeacherPagingLimits: {ex.Message}")
+        Finally
+            conn.Close()
+        End Try
+    End Sub
+
 
 
     Private Sub LoadSections(Optional ByVal gradeFilter As String = "")
@@ -737,6 +808,8 @@ Public Class MainForm
         Label4.Visible = True
         dgvTeachers.Visible = True
         NumericUpDown2.Visible = True
+
+        SetTeacherPagingLimits()
         LoadTeacherData(1)
 
         LoadSections()
@@ -754,4 +827,6 @@ Public Class MainForm
         End If
 
     End Sub
+
+
 End Class
