@@ -29,6 +29,58 @@ Public Class MainForm
     End Sub
 
     ' Menu item click events—each sets DisplayTracker and then loads the appropriate control
+    Private Sub LogoutToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles LogoutToolStripMenuItem.Click
+        ' Ask for confirmation before logging out
+        Dim result As DialogResult = MessageBox.Show("Are you sure you want to log out?", 
+                                                   "Confirm Logout", 
+                                                   MessageBoxButtons.YesNo, 
+                                                   MessageBoxIcon.Question)
+        
+        If result = DialogResult.Yes Then
+            ' Show login panel and hide main content
+            GroupBox1.Show()
+            MenuStrip1.Visible = False
+
+            ' Hide all main content panels
+            Label3.Visible = False
+            dgvStudent.Visible = False
+            NumericUpDown1.Visible = False
+            Label4.Visible = False
+            dgvTeachers.Visible = False
+            NumericUpDown2.Visible = False
+            Panel1.Visible = False
+            Panel2.Visible = False
+            Panel3.Visible = False
+            Panel4.Visible = False
+
+            ' Clear any existing user control
+            If currentControl IsNot Nothing Then
+                currentControl.Dispose()
+                Controls.Remove(currentControl)
+                currentControl = Nothing
+            End If
+
+            ' Clear login fields
+            txtAdminName.Text = ""
+            txtPassword.Text = ""
+            txtPassword2.Text = ""
+
+            ' Reset to login mode if in account creation mode
+            isCreatingAccount = False
+            txtPassword2.Visible = False
+            lblPassword2.Visible = False
+            Button1.Text = "Login"
+            btnCancel.Visible = False
+            
+            ' Set focus to username field
+            txtAdminName.Focus()
+            
+            ' Show logout success message
+            MessageBox.Show("You have been successfully logged out.", "Logout Successful", 
+                          MessageBoxButtons.OK, MessageBoxIcon.Information)
+        End If
+    End Sub
+
     Private Sub StudentToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles StudentToolStripMenuItem.Click
         Debug.WriteLine("Student menu clicked.")
         DisplayTracker = 1
@@ -184,44 +236,86 @@ Public Class MainForm
     End Sub
 
     Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
+        ' Input validation
+        If String.IsNullOrWhiteSpace(txtAdminName.Text) Then
+            MessageBox.Show("Please enter a username.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            txtAdminName.Focus()
+            Return
+        End If
+
+        If String.IsNullOrWhiteSpace(txtPassword.Text) Then
+            MessageBox.Show("Please enter a password.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            txtPassword.Focus()
+            Return
+        End If
+
         If isCreatingAccount Then
+            ' Additional validation for account creation
+            If String.IsNullOrWhiteSpace(txtPassword2.Text) Then
+                MessageBox.Show("Please confirm your password.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                txtPassword2.Focus()
+                Return
+            End If
+
+            If txtPassword.Text.Length < 8 Then
+                MessageBox.Show("Password must be at least 8 characters long.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                txtPassword.Focus()
+                Return
+            End If
+
             ' Register a new account
             RegisterUser(txtAdminName.Text.Trim(), txtPassword.Text.Trim(), txtPassword2.Text.Trim())
         Else
             ' Attempt login
-            If AuthenticateUser(txtAdminName.Text.Trim(), txtPassword.Text.Trim()) Then
-                GroupBox1.Hide()
-                MenuStrip1.Visible = True
+            Me.Cursor = Cursors.WaitCursor
+            Try
+                If AuthenticateUser(txtAdminName.Text.Trim(), txtPassword.Text.Trim()) Then
+                    GroupBox1.Hide()
+                    MenuStrip1.Visible = True
 
-                ' First set up the paginations before showing data
-                SetPagingLimits()
-                SetTeacherPagingLimits()
+                    ' First set up the paginations before showing data
+                    SetPagingLimits()
+                    SetTeacherPagingLimits()
 
-                ' Now set up the UI elements
-                Label3.Visible = True
-                dgvStudent.Visible = True
-                NumericUpDown1.Visible = True
-                NumericUpDown1.Enabled = True
+                    ' Now set up the UI elements
+                    Label3.Visible = True
+                    dgvStudent.Visible = True
+                    NumericUpDown1.Visible = True
+                    NumericUpDown1.Enabled = True
 
-                ' Load initial data (page 1)
-                LoadStudentData(1)
+                    ' Load initial data (page 1)
+                    LoadStudentData(1)
 
-                Label4.Visible = True
-                dgvTeachers.Visible = True
-                NumericUpDown2.Visible = True
-                LoadTeacherData(1)
+                    Label4.Visible = True
+                    dgvTeachers.Visible = True
+                    NumericUpDown2.Visible = True
+                    LoadTeacherData(1)
 
-                LoadGradeLevels(cmbGradeLevel)
-                LoadSections(cmbGradeLevel, cmbSection)
-                LoadEnrollmentChart()
+                    LoadGradeLevels(cmbGradeLevel)
+                    LoadSections(cmbGradeLevel, cmbSection)
+                    LoadEnrollmentChart()
 
-                Panel1.Visible = True
-                Panel2.Visible = True
-                Panel3.Visible = True
-                Panel4.Visible = True
-            Else
-                MessageBox.Show("Invalid username or password. Please try again.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
-            End If
+                    Panel1.Visible = True
+                    Panel2.Visible = True
+                    Panel3.Visible = True
+                    Panel4.Visible = True
+                    
+                    ' Show login success message
+                    MessageBox.Show("Login successful! Welcome, " & txtAdminName.Text.Trim() & ".", 
+                                  "Login Successful", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                Else
+                    ' Show login failed message
+                    MessageBox.Show("Invalid username or password. Please try again.", 
+                                  "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                    txtPassword.SelectAll()
+                    txtPassword.Focus()
+                End If
+            Catch ex As Exception
+                MessageBox.Show("An error occurred during login: " & ex.Message, 
+                              "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            Finally
+                Me.Cursor = Cursors.Default
+            End Try
         End If
     End Sub
 

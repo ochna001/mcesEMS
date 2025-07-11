@@ -22,9 +22,9 @@ Partial Class MainForm
     'Do not modify it using the code editor.
     <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
-        Dim ChartArea1 As System.Windows.Forms.DataVisualization.Charting.ChartArea = New DataVisualization.Charting.ChartArea()
-        Dim Legend1 As System.Windows.Forms.DataVisualization.Charting.Legend = New DataVisualization.Charting.Legend()
-        Dim Series1 As System.Windows.Forms.DataVisualization.Charting.Series = New DataVisualization.Charting.Series()
+        Dim ChartArea2 As System.Windows.Forms.DataVisualization.Charting.ChartArea = New DataVisualization.Charting.ChartArea()
+        Dim Legend2 As System.Windows.Forms.DataVisualization.Charting.Legend = New DataVisualization.Charting.Legend()
+        Dim Series2 As System.Windows.Forms.DataVisualization.Charting.Series = New DataVisualization.Charting.Series()
         MenuStrip1 = New MenuStrip()
         AddToolStripMenuItem = New ToolStripMenuItem()
         PersonToolStripMenuItem = New ToolStripMenuItem()
@@ -83,6 +83,7 @@ Partial Class MainForm
         cmbReportGradeLevel = New ComboBox()
         Label7 = New Label()
         Label8 = New Label()
+        LogoutToolStripMenuItem = New ToolStripMenuItem()
         MenuStrip1.SuspendLayout()
         GroupBox1.SuspendLayout()
         Panel1.SuspendLayout()
@@ -99,7 +100,7 @@ Partial Class MainForm
         ' 
         ' MenuStrip1
         ' 
-        MenuStrip1.Items.AddRange(New ToolStripItem() {AddToolStripMenuItem, SearchToolStripMenuItem, DashboardToolStripMenuItem, ReportsToolStripMenuItem, RecoveryToolStripMenuItem})
+        MenuStrip1.Items.AddRange(New ToolStripItem() {AddToolStripMenuItem, SearchToolStripMenuItem, DashboardToolStripMenuItem, ReportsToolStripMenuItem, RecoveryToolStripMenuItem, LogoutToolStripMenuItem})
         MenuStrip1.Location = New Point(0, 0)
         MenuStrip1.Name = "MenuStrip1"
         MenuStrip1.Size = New Size(802, 24)
@@ -442,18 +443,18 @@ Partial Class MainForm
         ' 
         ' Chart1
         ' 
-        ChartArea1.BorderWidth = 5
-        ChartArea1.Name = "ChartArea1"
-        Chart1.ChartAreas.Add(ChartArea1)
+        ChartArea2.BorderWidth = 5
+        ChartArea2.Name = "ChartArea1"
+        Chart1.ChartAreas.Add(ChartArea2)
         Chart1.Dock = DockStyle.Fill
-        Legend1.Name = "Legend1"
-        Chart1.Legends.Add(Legend1)
+        Legend2.Name = "Legend1"
+        Chart1.Legends.Add(Legend2)
         Chart1.Location = New Point(0, 42)
         Chart1.Name = "Chart1"
-        Series1.ChartArea = "ChartArea1"
-        Series1.Legend = "Legend1"
-        Series1.Name = "Series1"
-        Chart1.Series.Add(Series1)
+        Series2.ChartArea = "ChartArea1"
+        Series2.Legend = "Legend1"
+        Series2.Name = "Series1"
+        Chart1.Series.Add(Series2)
         Chart1.Size = New Size(802, 164)
         Chart1.TabIndex = 1
         Chart1.Text = "Chart1"
@@ -571,6 +572,12 @@ Partial Class MainForm
         Label8.TabIndex = 0
         Label8.Text = "Grade Level"
         ' 
+        ' LogoutToolStripMenuItem
+        ' 
+        LogoutToolStripMenuItem.Name = "LogoutToolStripMenuItem"
+        LogoutToolStripMenuItem.Size = New Size(57, 20)
+        LogoutToolStripMenuItem.Text = "Logout"
+        ' 
         ' MainForm
         ' 
         AutoScaleDimensions = New SizeF(7.0F, 15.0F)
@@ -666,5 +673,6 @@ Partial Class MainForm
     Friend WithEvents Label8 As Label
     Friend WithEvents ReportsToolStripMenuItem As ToolStripMenuItem
     Friend WithEvents EnrollmentListToolStripMenuItem As ToolStripMenuItem
+    Friend WithEvents LogoutToolStripMenuItem As ToolStripMenuItem
 
 End Class
