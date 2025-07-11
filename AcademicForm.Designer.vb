@@ -125,7 +125,7 @@ Partial Class AcademicForm
         cmbSchedule.FormattingEnabled = True
         cmbSchedule.Location = New Point(184, 199)
         cmbSchedule.Name = "cmbSchedule"
-        cmbSchedule.Size = New Size(121, 23)
+        cmbSchedule.Size = New Size(134, 23)
         cmbSchedule.TabIndex = 41
         ' 
         ' lblSchedule
@@ -151,7 +151,7 @@ Partial Class AcademicForm
         cmbClassroomID.FormattingEnabled = True
         cmbClassroomID.Location = New Point(184, 163)
         cmbClassroomID.Name = "cmbClassroomID"
-        cmbClassroomID.Size = New Size(121, 23)
+        cmbClassroomID.Size = New Size(134, 23)
         cmbClassroomID.TabIndex = 11
         ' 
         ' btnEditAE
@@ -168,7 +168,7 @@ Partial Class AcademicForm
         cmbGradeLevelID.FormattingEnabled = True
         cmbGradeLevelID.Location = New Point(184, 126)
         cmbGradeLevelID.Name = "cmbGradeLevelID"
-        cmbGradeLevelID.Size = New Size(121, 23)
+        cmbGradeLevelID.Size = New Size(134, 23)
         cmbGradeLevelID.TabIndex = 10
         ' 
         ' lblforcmb1
@@ -204,14 +204,14 @@ Partial Class AcademicForm
         ' 
         txt2nd.Location = New Point(184, 85)
         txt2nd.Name = "txt2nd"
-        txt2nd.Size = New Size(100, 23)
+        txt2nd.Size = New Size(134, 23)
         txt2nd.TabIndex = 5
         ' 
         ' txt1st
         ' 
         txt1st.Location = New Point(184, 47)
         txt1st.Name = "txt1st"
-        txt1st.Size = New Size(100, 23)
+        txt1st.Size = New Size(134, 23)
         txt1st.TabIndex = 3
         ' 
         ' label2

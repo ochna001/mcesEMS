@@ -236,7 +236,7 @@ Partial Class MainForm
         ' EnrollmentListToolStripMenuItem
         ' 
         EnrollmentListToolStripMenuItem.Name = "EnrollmentListToolStripMenuItem"
-        EnrollmentListToolStripMenuItem.Size = New Size(180, 22)
+        EnrollmentListToolStripMenuItem.Size = New Size(153, 22)
         EnrollmentListToolStripMenuItem.Text = "Enrollment List"
         ' 
         ' RecoveryToolStripMenuItem
@@ -249,13 +249,13 @@ Partial Class MainForm
         ' BackUpDatabaseToolStripMenuItem
         ' 
         BackUpDatabaseToolStripMenuItem.Name = "BackUpDatabaseToolStripMenuItem"
-        BackUpDatabaseToolStripMenuItem.Size = New Size(168, 22)
+        BackUpDatabaseToolStripMenuItem.Size = New Size(180, 22)
         BackUpDatabaseToolStripMenuItem.Text = "Back Up Database"
         ' 
         ' LoadFileToolStripMenuItem
         ' 
         LoadFileToolStripMenuItem.Name = "LoadFileToolStripMenuItem"
-        LoadFileToolStripMenuItem.Size = New Size(168, 22)
+        LoadFileToolStripMenuItem.Size = New Size(180, 22)
         LoadFileToolStripMenuItem.Text = "Load File"
         ' 
         ' GroupBox1

@@ -920,5 +920,7 @@ Public Class AcademicForm
 
     End Sub
 
+    Private Sub gbAcademicForms_Enter(sender As Object, e As EventArgs) Handles gbAcademicForms.Enter
 
+    End Sub
 End Class
