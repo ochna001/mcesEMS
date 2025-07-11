@@ -1,4 +1,4 @@
-﻿<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
+<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
 Partial Class MainForm
     Inherits System.Windows.Forms.Form
 
@@ -45,7 +45,13 @@ Partial Class MainForm
         SubjectToolStripMenuItem2 = New ToolStripMenuItem()
         SectionToolStripMenuItem1 = New ToolStripMenuItem()
         DashboardToolStripMenuItem = New ToolStripMenuItem()
+        ReportsToolStripMenuItem = New ToolStripMenuItem()
+        EnrollmentListToolStripMenuItem = New ToolStripMenuItem()
+        RecoveryToolStripMenuItem = New ToolStripMenuItem()
+        BackUpDatabaseToolStripMenuItem = New ToolStripMenuItem()
+        LoadFileToolStripMenuItem = New ToolStripMenuItem()
         GroupBox1 = New GroupBox()
+        btnCancel = New Button()
         txtPassword2 = New TextBox()
         lblPassword2 = New Label()
         LinkLabel1 = New LinkLabel()
@@ -55,6 +61,7 @@ Partial Class MainForm
         Label2 = New Label()
         Label1 = New Label()
         Panel1 = New Panel()
+        NumericUpDown1 = New NumericUpDown()
         dgvStudent = New DataGridView()
         Label3 = New Label()
         Panel2 = New Panel()
@@ -69,10 +76,17 @@ Partial Class MainForm
         cmbGradeLevel = New ComboBox()
         Label6 = New Label()
         Label5 = New Label()
-        NumericUpDown1 = New NumericUpDown()
+        pnlReportConfig = New Panel()
+        btnGenerateReport = New Button()
+        btnCloseReportPanel = New Button()
+        cmbReportSection = New ComboBox()
+        cmbReportGradeLevel = New ComboBox()
+        Label7 = New Label()
+        Label8 = New Label()
         MenuStrip1.SuspendLayout()
         GroupBox1.SuspendLayout()
         Panel1.SuspendLayout()
+        CType(NumericUpDown1, ComponentModel.ISupportInitialize).BeginInit()
         CType(dgvStudent, ComponentModel.ISupportInitialize).BeginInit()
         Panel2.SuspendLayout()
         CType(NumericUpDown2, ComponentModel.ISupportInitialize).BeginInit()
@@ -80,12 +94,12 @@ Partial Class MainForm
         Panel3.SuspendLayout()
         CType(Chart1, ComponentModel.ISupportInitialize).BeginInit()
         Panel4.SuspendLayout()
-        CType(NumericUpDown1, ComponentModel.ISupportInitialize).BeginInit()
+        pnlReportConfig.SuspendLayout()
         SuspendLayout()
         ' 
         ' MenuStrip1
         ' 
-        MenuStrip1.Items.AddRange(New ToolStripItem() {AddToolStripMenuItem, SearchToolStripMenuItem, DashboardToolStripMenuItem})
+        MenuStrip1.Items.AddRange(New ToolStripItem() {AddToolStripMenuItem, SearchToolStripMenuItem, DashboardToolStripMenuItem, ReportsToolStripMenuItem, RecoveryToolStripMenuItem})
         MenuStrip1.Location = New Point(0, 0)
         MenuStrip1.Name = "MenuStrip1"
         MenuStrip1.Size = New Size(802, 24)
@@ -212,8 +226,41 @@ Partial Class MainForm
         DashboardToolStripMenuItem.Size = New Size(76, 20)
         DashboardToolStripMenuItem.Text = "Dashboard"
         ' 
+        ' ReportsToolStripMenuItem
+        ' 
+        ReportsToolStripMenuItem.DropDownItems.AddRange(New ToolStripItem() {EnrollmentListToolStripMenuItem})
+        ReportsToolStripMenuItem.Name = "ReportsToolStripMenuItem"
+        ReportsToolStripMenuItem.Size = New Size(59, 20)
+        ReportsToolStripMenuItem.Text = "Reports"
+        ' 
+        ' EnrollmentListToolStripMenuItem
+        ' 
+        EnrollmentListToolStripMenuItem.Name = "EnrollmentListToolStripMenuItem"
+        EnrollmentListToolStripMenuItem.Size = New Size(180, 22)
+        EnrollmentListToolStripMenuItem.Text = "Enrollment List"
+        ' 
+        ' RecoveryToolStripMenuItem
+        ' 
+        RecoveryToolStripMenuItem.DropDownItems.AddRange(New ToolStripItem() {BackUpDatabaseToolStripMenuItem, LoadFileToolStripMenuItem})
+        RecoveryToolStripMenuItem.Name = "RecoveryToolStripMenuItem"
+        RecoveryToolStripMenuItem.Size = New Size(67, 20)
+        RecoveryToolStripMenuItem.Text = "Recovery"
+        ' 
+        ' BackUpDatabaseToolStripMenuItem
+        ' 
+        BackUpDatabaseToolStripMenuItem.Name = "BackUpDatabaseToolStripMenuItem"
+        BackUpDatabaseToolStripMenuItem.Size = New Size(168, 22)
+        BackUpDatabaseToolStripMenuItem.Text = "Back Up Database"
+        ' 
+        ' LoadFileToolStripMenuItem
+        ' 
+        LoadFileToolStripMenuItem.Name = "LoadFileToolStripMenuItem"
+        LoadFileToolStripMenuItem.Size = New Size(168, 22)
+        LoadFileToolStripMenuItem.Text = "Load File"
+        ' 
         ' GroupBox1
         ' 
+        GroupBox1.Controls.Add(btnCancel)
         GroupBox1.Controls.Add(txtPassword2)
         GroupBox1.Controls.Add(lblPassword2)
         GroupBox1.Controls.Add(LinkLabel1)
@@ -227,6 +274,14 @@ Partial Class MainForm
         GroupBox1.Size = New Size(328, 363)
         GroupBox1.TabIndex = 1
         GroupBox1.TabStop = False
+        ' 
+        ' btnCancel
+        ' 
+        btnCancel.Location = New Point(247, 12)
+        btnCancel.Name = "btnCancel"
+        btnCancel.Size = New Size(75, 23)
+        btnCancel.TabIndex = 8
+        btnCancel.Text = "Cancel"
         ' 
         ' txtPassword2
         ' 
@@ -305,6 +360,14 @@ Partial Class MainForm
         Panel1.Name = "Panel1"
         Panel1.Size = New Size(802, 270)
         Panel1.TabIndex = 8
+        ' 
+        ' NumericUpDown1
+        ' 
+        NumericUpDown1.Anchor = AnchorStyles.Top Or AnchorStyles.Right
+        NumericUpDown1.Location = New Point(642, 17)
+        NumericUpDown1.Name = "NumericUpDown1"
+        NumericUpDown1.Size = New Size(120, 23)
+        NumericUpDown1.TabIndex = 7
         ' 
         ' dgvStudent
         ' 
@@ -387,14 +450,12 @@ Partial Class MainForm
         Chart1.Legends.Add(Legend1)
         Chart1.Location = New Point(0, 42)
         Chart1.Name = "Chart1"
-        Series1.BorderWidth = 5
         Series1.ChartArea = "ChartArea1"
-        Series1.CustomProperties = "PointWidth=.2"
         Series1.Legend = "Legend1"
         Series1.Name = "Series1"
         Chart1.Series.Add(Series1)
         Chart1.Size = New Size(802, 164)
-        Chart1.TabIndex = 3
+        Chart1.TabIndex = 1
         Chart1.Text = "Chart1"
         ' 
         ' Panel4
@@ -407,72 +468,130 @@ Partial Class MainForm
         Panel4.Location = New Point(0, 0)
         Panel4.Name = "Panel4"
         Panel4.Size = New Size(802, 42)
-        Panel4.TabIndex = 2
+        Panel4.TabIndex = 0
         ' 
         ' cmbSection
         ' 
         cmbSection.FormattingEnabled = True
-        cmbSection.Location = New Point(299, 10)
+        cmbSection.Location = New Point(400, 10)
         cmbSection.Name = "cmbSection"
-        cmbSection.Size = New Size(97, 23)
-        cmbSection.TabIndex = 7
+        cmbSection.Size = New Size(121, 23)
+        cmbSection.TabIndex = 3
         ' 
         ' cmbGradeLevel
         ' 
         cmbGradeLevel.FormattingEnabled = True
-        cmbGradeLevel.Location = New Point(102, 10)
+        cmbGradeLevel.Location = New Point(150, 10)
         cmbGradeLevel.Name = "cmbGradeLevel"
-        cmbGradeLevel.Size = New Size(97, 23)
-        cmbGradeLevel.TabIndex = 6
+        cmbGradeLevel.Size = New Size(121, 23)
+        cmbGradeLevel.TabIndex = 2
         ' 
         ' Label6
         ' 
         Label6.AutoSize = True
-        Label6.Location = New Point(25, 18)
+        Label6.Location = New Point(300, 13)
         Label6.Name = "Label6"
-        Label6.Size = New Size(71, 15)
-        Label6.TabIndex = 5
-        Label6.Text = "Grade Level:"
+        Label6.Size = New Size(83, 15)
+        Label6.TabIndex = 1
+        Label6.Text = "Select Section:"
         ' 
         ' Label5
         ' 
         Label5.AutoSize = True
-        Label5.Location = New Point(244, 18)
+        Label5.Location = New Point(50, 13)
         Label5.Name = "Label5"
-        Label5.Size = New Size(49, 15)
-        Label5.TabIndex = 4
-        Label5.Text = "Section:"
+        Label5.Size = New Size(75, 15)
+        Label5.TabIndex = 0
+        Label5.Text = "Select Grade:"
         ' 
-        ' NumericUpDown1
+        ' pnlReportConfig
         ' 
-        NumericUpDown1.Anchor = AnchorStyles.Top Or AnchorStyles.Right
-        NumericUpDown1.Location = New Point(642, 20)
-        NumericUpDown1.Name = "NumericUpDown1"
-        NumericUpDown1.Size = New Size(120, 23)
-        NumericUpDown1.TabIndex = 7
+        pnlReportConfig.BackColor = SystemColors.ActiveBorder
+        pnlReportConfig.Controls.Add(btnGenerateReport)
+        pnlReportConfig.Controls.Add(btnCloseReportPanel)
+        pnlReportConfig.Controls.Add(cmbReportSection)
+        pnlReportConfig.Controls.Add(cmbReportGradeLevel)
+        pnlReportConfig.Controls.Add(Label7)
+        pnlReportConfig.Controls.Add(Label8)
+        pnlReportConfig.Location = New Point(250, 50)
+        pnlReportConfig.Name = "pnlReportConfig"
+        pnlReportConfig.Size = New Size(300, 200)
+        pnlReportConfig.TabIndex = 10
+        pnlReportConfig.Visible = False
+        ' 
+        ' btnGenerateReport
+        ' 
+        btnGenerateReport.Location = New Point(150, 150)
+        btnGenerateReport.Name = "btnGenerateReport"
+        btnGenerateReport.Size = New Size(120, 30)
+        btnGenerateReport.TabIndex = 5
+        btnGenerateReport.Text = "Generate Report"
+        btnGenerateReport.UseVisualStyleBackColor = True
+        ' 
+        ' btnCloseReportPanel
+        ' 
+        btnCloseReportPanel.Location = New Point(30, 150)
+        btnCloseReportPanel.Name = "btnCloseReportPanel"
+        btnCloseReportPanel.Size = New Size(100, 30)
+        btnCloseReportPanel.TabIndex = 4
+        btnCloseReportPanel.Text = "Close"
+        btnCloseReportPanel.UseVisualStyleBackColor = True
+        ' 
+        ' cmbReportSection
+        ' 
+        cmbReportSection.FormattingEnabled = True
+        cmbReportSection.Location = New Point(100, 80)
+        cmbReportSection.Name = "cmbReportSection"
+        cmbReportSection.Size = New Size(150, 23)
+        cmbReportSection.TabIndex = 3
+        ' 
+        ' cmbReportGradeLevel
+        ' 
+        cmbReportGradeLevel.FormattingEnabled = True
+        cmbReportGradeLevel.Location = New Point(100, 40)
+        cmbReportGradeLevel.Name = "cmbReportGradeLevel"
+        cmbReportGradeLevel.Size = New Size(150, 23)
+        cmbReportGradeLevel.TabIndex = 2
+        ' 
+        ' Label7
+        ' 
+        Label7.AutoSize = True
+        Label7.Location = New Point(30, 83)
+        Label7.Name = "Label7"
+        Label7.Size = New Size(46, 15)
+        Label7.TabIndex = 1
+        Label7.Text = "Section"
+        ' 
+        ' Label8
+        ' 
+        Label8.AutoSize = True
+        Label8.Location = New Point(30, 43)
+        Label8.Name = "Label8"
+        Label8.Size = New Size(68, 15)
+        Label8.TabIndex = 0
+        Label8.Text = "Grade Level"
         ' 
         ' MainForm
         ' 
-        AutoScaleDimensions = New SizeF(7F, 15F)
+        AutoScaleDimensions = New SizeF(7.0F, 15.0F)
         AutoScaleMode = AutoScaleMode.Font
-        AutoScroll = True
-        BackColor = SystemColors.ActiveBorder
         ClientSize = New Size(802, 749)
+        Controls.Add(pnlReportConfig)
         Controls.Add(Panel3)
         Controls.Add(Panel2)
         Controls.Add(Panel1)
         Controls.Add(GroupBox1)
         Controls.Add(MenuStrip1)
         MainMenuStrip = MenuStrip1
-        MinimumSize = New Size(816, 500)
         Name = "MainForm"
-        Text = "MCES Enrollment MS"
+        Text = "MainForm"
         MenuStrip1.ResumeLayout(False)
         MenuStrip1.PerformLayout()
         GroupBox1.ResumeLayout(False)
         GroupBox1.PerformLayout()
         Panel1.ResumeLayout(False)
         Panel1.PerformLayout()
+        CType(NumericUpDown1, ComponentModel.ISupportInitialize).EndInit()
         CType(dgvStudent, ComponentModel.ISupportInitialize).EndInit()
         Panel2.ResumeLayout(False)
         Panel2.PerformLayout()
@@ -482,27 +601,29 @@ Partial Class MainForm
         CType(Chart1, ComponentModel.ISupportInitialize).EndInit()
         Panel4.ResumeLayout(False)
         Panel4.PerformLayout()
-        CType(NumericUpDown1, ComponentModel.ISupportInitialize).EndInit()
+        pnlReportConfig.ResumeLayout(False)
+        pnlReportConfig.PerformLayout()
         ResumeLayout(False)
         PerformLayout()
+
     End Sub
 
     Friend WithEvents MenuStrip1 As MenuStrip
     Friend WithEvents AddToolStripMenuItem As ToolStripMenuItem
     Friend WithEvents PersonToolStripMenuItem As ToolStripMenuItem
-    Friend WithEvents BuildingToolStripMenuItem As ToolStripMenuItem
     Friend WithEvents StudentToolStripMenuItem As ToolStripMenuItem
     Friend WithEvents TeacherToolStripMenuItem As ToolStripMenuItem
+    Friend WithEvents ParentGuardianToolStripMenuItem As ToolStripMenuItem
+    Friend WithEvents BuildingToolStripMenuItem As ToolStripMenuItem
     Friend WithEvents ClassroomToolStripMenuItem As ToolStripMenuItem
     Friend WithEvents SubjectToolStripMenuItem As ToolStripMenuItem
     Friend WithEvents SectionToolStripMenuItem As ToolStripMenuItem
-    Friend WithEvents ParentGuardianToolStripMenuItem As ToolStripMenuItem
     Friend WithEvents SearchToolStripMenuItem As ToolStripMenuItem
     Friend WithEvents SPersonToolStripMenuItem1 As ToolStripMenuItem
-    Friend WithEvents SAcademicStructureToolStripMenuItem As ToolStripMenuItem
     Friend WithEvents searchStudentToolStripMenuItem2 As ToolStripMenuItem
     Friend WithEvents searchTeacherToolStripMenuItem1 As ToolStripMenuItem
     Friend WithEvents searchParentGuardianToolStripMenuItem1 As ToolStripMenuItem
+    Friend WithEvents SAcademicStructureToolStripMenuItem As ToolStripMenuItem
     Friend WithEvents ClassroomToolStripMenuItem1 As ToolStripMenuItem
     Friend WithEvents SubjectToolStripMenuItem2 As ToolStripMenuItem
     Friend WithEvents SectionToolStripMenuItem1 As ToolStripMenuItem
@@ -515,11 +636,11 @@ Partial Class MainForm
     Friend WithEvents LinkLabel1 As LinkLabel
     Friend WithEvents txtPassword2 As TextBox
     Friend WithEvents lblPassword2 As Label
+    Friend WithEvents btnCancel As Button
     Friend WithEvents Panel1 As Panel
     Friend WithEvents dgvStudent As DataGridView
     Friend WithEvents Label3 As Label
     Friend WithEvents Panel2 As Panel
-    Friend WithEvents NumericUpDown2 As NumericUpDown
     Friend WithEvents dgvTeachers As DataGridView
     Friend WithEvents Label4 As Label
     Friend WithEvents MySqlCommand1 As MySql.Data.MySqlClient.MySqlCommand
@@ -531,6 +652,19 @@ Partial Class MainForm
     Friend WithEvents Label6 As Label
     Friend WithEvents Label5 As Label
     Friend WithEvents DashboardToolStripMenuItem As ToolStripMenuItem
+    Friend WithEvents RecoveryToolStripMenuItem As ToolStripMenuItem
+    Friend WithEvents BackUpDatabaseToolStripMenuItem As ToolStripMenuItem
+    Friend WithEvents LoadFileToolStripMenuItem As ToolStripMenuItem
     Friend WithEvents NumericUpDown1 As NumericUpDown
+    Friend WithEvents NumericUpDown2 As NumericUpDown
+    Friend WithEvents pnlReportConfig As Panel
+    Friend WithEvents btnGenerateReport As Button
+    Friend WithEvents btnCloseReportPanel As Button
+    Friend WithEvents cmbReportSection As ComboBox
+    Friend WithEvents cmbReportGradeLevel As ComboBox
+    Friend WithEvents Label7 As Label
+    Friend WithEvents Label8 As Label
+    Friend WithEvents ReportsToolStripMenuItem As ToolStripMenuItem
+    Friend WithEvents EnrollmentListToolStripMenuItem As ToolStripMenuItem
 
 End Class

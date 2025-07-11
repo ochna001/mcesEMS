@@ -1,4 +1,4 @@
-﻿Imports MySql.Data.MySqlClient
+Imports MySql.Data.MySqlClient
 Imports System.IO
 
 Public Class PersonForm
@@ -174,6 +174,10 @@ Public Class PersonForm
     Private Sub InitializeFormControls()
         ' Only bind the Grade Level initially
         BindGradeLevelCombo(cmbGradeLevel)
+
+        ' Configure Section ComboBox for searching
+        cmbSection.AutoCompleteMode = AutoCompleteMode.SuggestAppend
+        cmbSection.AutoCompleteSource = AutoCompleteSource.ListItems
 
         ' Clear other controls
         cmbSection.DataSource = Nothing
@@ -370,6 +374,13 @@ Public Class PersonForm
     '--------------------------
     ' Teacher/Parent Input Validation
     '--------------------------
+    Private Sub BlockNonLetters_KeyPress(sender As Object, e As KeyPressEventArgs) Handles txtFname.KeyPress, txtLname.KeyPress, txtMname.KeyPress, txtFnamepd.KeyPress, txtLnamepd.KeyPress, txtMnamepd.KeyPress
+        ' Allow control characters (like backspace), letters, and spaces.
+        If Not Char.IsControl(e.KeyChar) AndAlso Not Char.IsLetter(e.KeyChar) AndAlso Not Char.IsWhiteSpace(e.KeyChar) Then
+            e.Handled = True ' Discard the character
+        End If
+    End Sub
+
     Private Function ValidatePersonDetailsInputs() As Boolean
         ' Validate required fields for Teacher or Parent/Guardian.
         If String.IsNullOrEmpty(txtFnamepd.Text.Trim()) Then
@@ -412,25 +423,36 @@ Public Class PersonForm
     ' Student Save Routine (Updated)
     '--------------------------
     Private Sub btnSaveStudent_Click(sender As Object, e As EventArgs) Handles btnSaveStudent.Click
+        ' Add confirmation dialog
+        Dim confirmationMessage As String = If(DisplayTracker = 11 AndAlso Not String.IsNullOrEmpty(selectedStudentID), "Are you sure you want to update this student's record?", "Are you sure you want to save this new student?")
+        Dim confirmationResult = MessageBox.Show(confirmationMessage, "Confirm Save", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+
+        If confirmationResult = DialogResult.No Then
+            Return ' User chose not to save
+        End If
+
+        ' If updating an existing student, handle separately
+        If DisplayTracker = 11 AndAlso Not String.IsNullOrEmpty(selectedStudentID) Then
+            UpdateStudent()
+            Return
+        End If
+
+        ' Validate inputs before starting transaction
+        If Not ValidateStudentInputs() Then Return
+
+        If IsStudentDuplicate(txtFname.Text.Trim(), txtLname.Text.Trim(), dtpDOB.Value) Then
+            MessageBox.Show("A student with the same first name, last name, and birthdate already exists.", "Duplicate Student", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return
+        End If
+
+        opencon(db_name)
+        Dim transaction As MySqlTransaction = conn.BeginTransaction()
+
         Try
-            ' If updating an existing student
-            If DisplayTracker = 11 AndAlso Not String.IsNullOrEmpty(selectedStudentID) Then
-                UpdateStudent()
-                Exit Sub
-            End If
-
-            ' Validate student inputs before proceeding
-            If Not ValidateStudentInputs() Then Exit Sub
-
-            ' Open database connection
-            opencon(db_name)
-
-            ' Step 1: Insert new student record into the database
-            Dim sqlStudent As String = "INSERT INTO Student " &
-            "(Fname, Midname, Lname, Address, DOB, Sex, Grade_Level_ID) " &
-            "VALUES (@Fname, @Midname, @Lname, @Address, @DOB, @Sex, @GradeLevelID)"
-
-            Using cmdStudent As New MySqlCommand(sqlStudent, conn)
+            ' Step 1: Insert new student record
+            Dim sqlStudent As String = "INSERT INTO Student (Fname, Midname, Lname, Address, DOB, Sex, Grade_Level_ID) VALUES (@Fname, @Midname, @Lname, @Address, @DOB, @Sex, @GradeLevelID)"
+            Dim studentID As Long
+            Using cmdStudent As New MySqlCommand(sqlStudent, conn, transaction)
                 cmdStudent.Parameters.AddWithValue("@Fname", txtFname.Text.Trim())
                 cmdStudent.Parameters.AddWithValue("@Midname", txtMname.Text.Trim())
                 cmdStudent.Parameters.AddWithValue("@Lname", txtLname.Text.Trim())
@@ -439,47 +461,27 @@ Public Class PersonForm
                 cmdStudent.Parameters.AddWithValue("@Sex", If(cmbSex.SelectedItem.ToString() = "Female", "F", "M"))
                 cmdStudent.Parameters.AddWithValue("@GradeLevelID", cmbGradeLevel.SelectedValue.ToString())
                 cmdStudent.ExecuteNonQuery()
+                studentID = cmdStudent.LastInsertedId
+                lastInsertedStudentID = studentID.ToString()
             End Using
 
-            ' Step 2: Retrieve auto-generated Student_ID
-            Dim studentID As String = ""
-            Dim sqlGetID As String = "SELECT LAST_INSERT_ID()"
-
-            Using cmdID As New MySqlCommand(sqlGetID, conn)
-                Using dr As MySqlDataReader = cmdID.ExecuteReader()
-                    If dr.Read() Then
-                        studentID = dr(0).ToString()
-                        lastInsertedStudentID = studentID
-                    Else
-                        MessageBox.Show("Unable to retrieve new Student ID.")
-                        dr.Close()
-                        conn.Close()
-                        Exit Sub
-                    End If
-                End Using
-            End Using
-
-            ' Step 3: Compute current school year (e.g., "2025-2026")
+            ' Step 2: Enroll student in section
             Dim currentSchoolYear As String = DateTime.Now.Year.ToString() & "-" & (DateTime.Now.Year + 1).ToString()
-
-            ' Step 4: Enroll student in the selected section
-            Dim sqlBelongsTo As String = "INSERT INTO belongs_to (Section_ID, Student_ID, SchoolYear) " &
-                                      "VALUES (@SectionID, @StudentID, @SchoolYear)"
-            Using cmdBelongsTo As New MySqlCommand(sqlBelongsTo, conn)
+            Dim sqlBelongsTo As String = "INSERT INTO belongs_to (Section_ID, Student_ID, SchoolYear) VALUES (@SectionID, @StudentID, @SchoolYear)"
+            Using cmdBelongsTo As New MySqlCommand(sqlBelongsTo, conn, transaction)
                 cmdBelongsTo.Parameters.AddWithValue("@SectionID", cmbSection.SelectedValue.ToString())
                 cmdBelongsTo.Parameters.AddWithValue("@StudentID", studentID)
                 cmdBelongsTo.Parameters.AddWithValue("@SchoolYear", currentSchoolYear)
                 cmdBelongsTo.ExecuteNonQuery()
             End Using
 
-            ' Step 5: Assign subjects to the student
+            ' Step 3: Assign subjects
             For i As Integer = 0 To clbSubjects.CheckedItems.Count - 1
                 Dim checkedIndex As Integer = clbSubjects.CheckedIndices(i)
                 Dim subjectDict As Dictionary(Of Integer, Integer) = DirectCast(clbSubjects.Tag, Dictionary(Of Integer, Integer))
                 Dim subjectID As Integer = subjectDict(checkedIndex)
-
                 Dim sqlTakenBy As String = "INSERT INTO taken_by (Subject_ID, Student_ID, Grades, Year) VALUES (@SubjectID, @StudentID, 0, @Year)"
-                Using cmdTakenBy As New MySqlCommand(sqlTakenBy, conn)
+                Using cmdTakenBy As New MySqlCommand(sqlTakenBy, conn, transaction)
                     cmdTakenBy.Parameters.AddWithValue("@SubjectID", subjectID)
                     cmdTakenBy.Parameters.AddWithValue("@StudentID", studentID)
                     cmdTakenBy.Parameters.AddWithValue("@Year", currentSchoolYear)
@@ -487,30 +489,25 @@ Public Class PersonForm
                 End Using
             Next
 
-            ' 6. Update section totals
-            Dim sqlUpdateSection As String = "UPDATE Section SET Total_Students = (SELECT COUNT(*) FROM belongs_to WHERE Section_ID = " & cmbSection.SelectedValue.ToString() & ") " &
-                "WHERE Section_ID = " & cmbSection.SelectedValue.ToString()
-            readquery(sqlUpdateSection)
-            If cmdread IsNot Nothing Then cmdread.Close()
-
-            ' 7. Update overall grade level totals
-            UpdateTotalStudents()
-
-            ' Step 6: Upload file if a file was selected
+            ' Step 4: Upload files
             If selectedFileData IsNot Nothing AndAlso Not String.IsNullOrEmpty(selectedFileName) Then
-                UploadStudentFile(studentID, selectedFileName, selectedFileData)
+                UploadStudentFile(studentID.ToString(), selectedFileName, selectedFileData, transaction)
             End If
-
             If selectedReportCardData IsNot Nothing AndAlso Not String.IsNullOrEmpty(selectedReportCardName) Then
-                UploadReportCard(studentID, selectedReportCardName, selectedReportCardData)
+                UploadReportCard(studentID.ToString(), selectedReportCardName, selectedReportCardData, transaction)
             End If
 
-            ' Step 7: Confirm and finalize enrollment
-            Debug.Print("Student record inserted. Student ID: " & studentID)
-            MessageBox.Show("Student successfully enrolled!")
+            ' Step 5: Update counts
+            UpdateTotalStudents(transaction)
+
+            ' If all successful, commit the transaction
+            transaction.Commit()
+            MessageBox.Show("Student successfully enrolled!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)
+            ClearStudentFields()
 
         Catch ex As Exception
-            MessageBox.Show("An error occurred: " & ex.Message)
+            transaction.Rollback()
+            MessageBox.Show("An error occurred during enrollment. The operation was rolled back. Error: " & ex.Message, "Enrollment Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
         Finally
             conn.Close()
         End Try
@@ -519,6 +516,19 @@ Public Class PersonForm
     '--------------------------
     ' Teacher / Parent-Guardian Save Routine
     '--------------------------
+    Private Sub txtContactInfopd_KeyPress(sender As Object, e As KeyPressEventArgs) Handles txtContactInfopd.KeyPress
+        ' Allow only digits and control characters (like backspace).
+        If Not Char.IsDigit(e.KeyChar) AndAlso Not Char.IsControl(e.KeyChar) Then
+            e.Handled = True
+        End If
+
+        ' Also, prevent entry if the length is already 11, unless it's a control character.
+        Dim textBox = CType(sender, TextBox)
+        If textBox.Text.Length >= 11 AndAlso Not Char.IsControl(e.KeyChar) Then
+            e.Handled = True
+        End If
+    End Sub
+
     Private Sub btnSavepd_Click(sender As Object, e As EventArgs) Handles btnSavepd.Click
         ' Validate inputs for teacher/parent/guardian.
         If Not ValidatePersonDetailsInputs() Then
@@ -532,6 +542,14 @@ Public Class PersonForm
             Debug.WriteLine("DisplayTracker: " & DisplayTracker.ToString)
             Select Case DisplayTracker
                 Case 2 ' Save Teacher
+                    ' Validate Contact Information
+                    Dim contactInfo As String = txtContactInfopd.Text.Trim()
+                    If contactInfo.Length <> 11 OrElse Not contactInfo.All(AddressOf Char.IsDigit) Then
+                        MessageBox.Show("Contact Information must be exactly 11 digits and contain only numbers.", "Invalid Input", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                        txtContactInfopd.Focus()
+                        Return
+                    End If
+
                     ' Ensure we have a selected item for the Gender combo box.
                     If cmbSexpd.SelectedItem Is Nothing Then
                         MsgBox("Please select a gender for the teacher.")
@@ -612,6 +630,7 @@ Public Class PersonForm
                 End If
 
                 MessageBox.Show("Record saved successfully!")
+                ClearPersonFields()
 
                 ' After saving, rebind the Parent/Guardian combo box in the student enrollment panel.
                 BindComboBox(cmbParentGuardian, "SELECT Parent_Guardian_ID, CONCAT(Fname, ' ', Lname) AS ParentName FROM parent_guardian")
@@ -699,6 +718,11 @@ Public Class PersonForm
                 ' Store the dictionary in the Tag property for later retrieval.
                 clbSubjects.Tag = subjectDict
 
+                ' Uncheck all items initially
+                For i As Integer = 0 To clbSubjects.Items.Count - 1
+                    clbSubjects.SetItemChecked(i, False)
+                Next
+
                 Debug.WriteLine("clbSubjects populated with " & dt.Rows.Count.ToString() & " items.")
             Else
                 Debug.WriteLine("No subjects found in database.")
@@ -753,73 +777,39 @@ Public Class PersonForm
     End Sub
 
     Private Sub btnChooseFile_Click(sender As Object, e As EventArgs) Handles btnUploadBirthCertificate.Click
-        Dim ofd As New OpenFileDialog()
-        ofd.Filter = "PDF Files|*.pdf|Word Documents|*.docx|Image Files|*.jpg;*.jpeg;*.png"
-        If ofd.ShowDialog() = DialogResult.OK Then
-            selectedFileData = File.ReadAllBytes(ofd.FileName)
-            selectedFileName = Path.GetFileName(ofd.FileName)
-            MessageBox.Show("File selected: " & selectedFileName)
-        Else
-            MessageBox.Show("No file selected.")
-        End If
+        Using ofd As New OpenFileDialog()
+            ofd.Filter = "PDF Files|*.pdf|Word Documents|*.docx|Image Files|*.jpg;*.jpeg;*.png"
+            If ofd.ShowDialog() = DialogResult.OK Then
+                Dim fileInfo As New FileInfo(ofd.FileName)
+                ' 4MB size limit
+                If fileInfo.Length > 2 * 1024 * 1024 Then
+                    MessageBox.Show("The selected file is too large. Please select a file smaller than 4MB.", "File Size Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                    Return
+                End If
+                selectedFileData = File.ReadAllBytes(ofd.FileName)
+                selectedFileName = Path.GetFileName(ofd.FileName)
+                lblBirthCertificateFileName.Text = selectedFileName
+                MessageBox.Show("File selected: " & selectedFileName)
+            Else
+                MessageBox.Show("No file selected.")
+            End If
+        End Using
     End Sub
 
-    Private Sub UploadStudentFile(ByVal studentID As String, ByVal fileName As String, ByVal fileData() As Byte)
-        Try
-            ' Open database connection
-            opencon(db_name)
-            Dim uploadDate As String = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+    Private Sub UploadStudentFile(ByVal studentID As String, ByVal fileName As String, ByVal fileData() As Byte, ByVal transaction As MySqlTransaction)
+        Dim uploadDate As String = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+        Dim formattedDocumentType As String = "BirthCertificate_" & fileName
 
-            Dim formattedDocumentType As String = "BirthCertificate_" & fileName
+        Dim sql As String = "INSERT INTO Requirements (Student_ID, Document_Type, FileData, Submission_Date, Submission_Status, Parent_Guardian_ID) VALUES (@StudentID, @DocumentType, @FileData, @SubmissionDate, 'Submitted', @ParentID) ON DUPLICATE KEY UPDATE FileData = @FileData, Submission_Date = @SubmissionDate, Submission_Status = 'Updated', Document_Type = @DocumentType"
 
-            ' Step 1: Check if a file already exists for this student
-            Dim checkFileQuery As String = "SELECT COUNT(*) FROM Requirements WHERE Student_ID = @StudentID"
-            Dim fileExists As Boolean = False
-
-            Using cmdCheck As New MySqlCommand(checkFileQuery, conn)
-                cmdCheck.Parameters.AddWithValue("@StudentID", studentID)
-                Dim count As Integer = Convert.ToInt32(cmdCheck.ExecuteScalar())
-                fileExists = (count > 0)
-            End Using
-
-            If fileExists Then
-                ' Step 2: If a file exists, UPDATE the existing record
-                Dim sqlUpdateFile As String = "UPDATE Requirements SET Document_Type = @docType, " &
-                "Submission_Status = 'Updated', Submission_Date = @subDate, FileData = @fileData " &
-                "WHERE Student_ID = @studentID"
-
-                Using cmdUpdate As New MySqlCommand(sqlUpdateFile, conn)
-                    cmdUpdate.Parameters.AddWithValue("@docType", formattedDocumentType)
-                    cmdUpdate.Parameters.AddWithValue("@subDate", uploadDate)
-                    cmdUpdate.Parameters.AddWithValue("@studentID", studentID)
-                    cmdUpdate.Parameters.AddWithValue("@fileData", fileData)
-                    cmdUpdate.ExecuteNonQuery()
-                End Using
-
-                MessageBox.Show("File updated successfully!")
-
-            Else
-                ' Step 3: If no file exists, INSERT a new record
-                Dim sqlInsertFile As String = "INSERT INTO Requirements (Document_Type, Submission_Status, Submission_Date, Parent_Guardian_ID, Student_ID, FileData) " &
-                                          "VALUES (@docType, 'Submitted', @subDate, @parentID, @studentID, @fileData)"
-
-                Using cmdInsert As New MySqlCommand(sqlInsertFile, conn)
-                    cmdInsert.Parameters.AddWithValue("@docType", formattedDocumentType)
-                    cmdInsert.Parameters.AddWithValue("@subDate", uploadDate)
-                    cmdInsert.Parameters.AddWithValue("@parentID", cmbParentGuardian.SelectedValue.ToString())
-                    cmdInsert.Parameters.AddWithValue("@studentID", studentID)
-                    cmdInsert.Parameters.AddWithValue("@fileData", fileData)
-                    cmdInsert.ExecuteNonQuery()
-                End Using
-
-                MessageBox.Show("File uploaded successfully!")
-            End If
-
-        Catch ex As Exception
-            MessageBox.Show("Error processing file upload: " & ex.Message)
-        Finally
-            conn.Close()
-        End Try
+        Using cmd As New MySqlCommand(sql, conn, transaction)
+            cmd.Parameters.AddWithValue("@StudentID", studentID)
+            cmd.Parameters.AddWithValue("@DocumentType", formattedDocumentType)
+            cmd.Parameters.AddWithValue("@FileData", fileData)
+            cmd.Parameters.AddWithValue("@SubmissionDate", uploadDate)
+            cmd.Parameters.AddWithValue("@ParentID", cmbParentGuardian.SelectedValue.ToString())
+            cmd.ExecuteNonQuery()
+        End Using
     End Sub
 
 
@@ -919,75 +909,56 @@ Public Class PersonForm
     ' --- Button for Uploading Report Card (if applicable) ---
     ' Event handler for selecting a Report Card file
     Private Sub btnUploadReportCard_Click(sender As Object, e As EventArgs) Handles btnUploadReportCard.Click
-        Dim ofd As New OpenFileDialog()
-        ofd.Filter = "PDF Files|*.pdf|Word Documents|*.docx|Image Files|*.jpg;*.jpeg;*.png"
-
-        If ofd.ShowDialog() = DialogResult.OK Then
-            selectedReportCardData = File.ReadAllBytes(ofd.FileName)
-            selectedReportCardName = Path.GetFileName(ofd.FileName)
-            MessageBox.Show("File selected: " & selectedReportCardName)
-        Else
-            MessageBox.Show("No file selected.")
-        End If
+        Using ofd As New OpenFileDialog()
+            ofd.Filter = "PDF Files|*.pdf|Word Documents|*.docx|Image Files|*.jpg;*.jpeg;*.png"
+            If ofd.ShowDialog() = DialogResult.OK Then
+                Dim fileInfo As New FileInfo(ofd.FileName)
+                ' 2MB size limit
+                If fileInfo.Length > 2 * 1024 * 1024 Then
+                    MessageBox.Show("The selected file is too large. Please select a file smaller than 2MB.", "File Size Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                    Return
+                End If
+                selectedReportCardData = File.ReadAllBytes(ofd.FileName)
+                selectedReportCardName = Path.GetFileName(ofd.FileName)
+                lblReportCardFileName.Text = selectedReportCardName
+                MessageBox.Show("File selected: " & selectedReportCardName)
+            Else
+                MessageBox.Show("No file selected.")
+            End If
+        End Using
     End Sub
 
     ' Upload or update the Report Card in the database
-    Private Sub UploadReportCard(ByVal studentID As String, ByVal fileName As String, ByVal fileData() As Byte)
-        Try
-            ' Open database connection
-            opencon(db_name)
-            Dim uploadDate As String = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+    Private Sub UpdateTotalStudents(ByVal transaction As MySqlTransaction)
+        ' Update section total
+        Dim sqlUpdateSection As String = "UPDATE Section SET Total_Students = (SELECT COUNT(*) FROM belongs_to WHERE Section_ID = @SectionID) WHERE Section_ID = @SectionID"
+        Using cmdUpdateSection As New MySqlCommand(sqlUpdateSection, conn, transaction)
+            cmdUpdateSection.Parameters.AddWithValue("@SectionID", cmbSection.SelectedValue.ToString())
+            cmdUpdateSection.ExecuteNonQuery()
+        End Using
 
-            ' Format the document type to store actual filename + document type
-            Dim formattedDocumentType As String = "ReportCard_" & fileName
+        ' Update grade level total
+        Dim sqlUpdateGradeLevel As String = "UPDATE Grade_Level SET Total_Students = (SELECT COUNT(*) FROM Student WHERE Grade_Level_ID = @GradeLevelID) WHERE Grade_Level_ID = @GradeLevelID"
+        Using cmdUpdateGradeLevel As New MySqlCommand(sqlUpdateGradeLevel, conn, transaction)
+            cmdUpdateGradeLevel.Parameters.AddWithValue("@GradeLevelID", cmbGradeLevel.SelectedValue.ToString())
+            cmdUpdateGradeLevel.ExecuteNonQuery()
+        End Using
+    End Sub
 
-            ' Step 1: Check if a Report Card already exists for this student
-            Dim checkFileQuery As String = "SELECT COUNT(*) FROM Requirements WHERE Student_ID = @StudentID AND Document_Type LIKE '%ReportCard%'"
-            Dim fileExists As Boolean = False
+    Private Sub UploadReportCard(ByVal studentID As String, ByVal fileName As String, ByVal fileData() As Byte, ByVal transaction As MySqlTransaction)
+        Dim uploadDate As String = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+        Dim formattedDocumentType As String = "ReportCard_" & fileName
 
-            Using cmdCheck As New MySqlCommand(checkFileQuery, conn)
-                cmdCheck.Parameters.AddWithValue("@StudentID", studentID)
-                Dim count As Integer = Convert.ToInt32(cmdCheck.ExecuteScalar())
-                fileExists = (count > 0)
-            End Using
+        Dim sql As String = "INSERT INTO Requirements (Student_ID, Document_Type, FileData, Submission_Date, Submission_Status, Parent_Guardian_ID) VALUES (@StudentID, @DocumentType, @FileData, @SubmissionDate, 'Submitted', @ParentID) ON DUPLICATE KEY UPDATE FileData = @FileData, Submission_Date = @SubmissionDate, Submission_Status = 'Updated', Document_Type = @DocumentType"
 
-            If fileExists Then
-                ' Step 2: If a Report Card exists, UPDATE the existing record
-                Dim sqlUpdateFile As String = "UPDATE Requirements SET FileData = @fileData, Submission_Status = 'Updated', Submission_Date = @subDate, Document_Type = @docType " &
-                                          "WHERE Student_ID = @studentID AND Document_Type LIKE '%ReportCard%'"
-
-                Using cmdUpdate As New MySqlCommand(sqlUpdateFile, conn)
-                    cmdUpdate.Parameters.AddWithValue("@subDate", uploadDate)
-                    cmdUpdate.Parameters.AddWithValue("@studentID", studentID)
-                    cmdUpdate.Parameters.AddWithValue("@fileData", fileData)
-                    cmdUpdate.Parameters.AddWithValue("@docType", formattedDocumentType)
-                    cmdUpdate.ExecuteNonQuery()
-                End Using
-
-                MessageBox.Show("Report Card updated successfully!")
-
-            Else
-                ' Step 3: If no Report Card exists, INSERT a new record
-                Dim sqlInsertFile As String = "INSERT INTO Requirements (Document_Type, Submission_Status, Submission_Date, Parent_Guardian_ID, Student_ID, FileData) " &
-                                          "VALUES (@docType, 'Submitted', @subDate, @parentID, @studentID, @fileData)"
-
-                Using cmdInsert As New MySqlCommand(sqlInsertFile, conn)
-                    cmdInsert.Parameters.AddWithValue("@docType", formattedDocumentType)
-                    cmdInsert.Parameters.AddWithValue("@subDate", uploadDate)
-                    cmdInsert.Parameters.AddWithValue("@parentID", cmbParentGuardian.SelectedValue.ToString())
-                    cmdInsert.Parameters.AddWithValue("@studentID", studentID)
-                    cmdInsert.Parameters.AddWithValue("@fileData", fileData)
-                    cmdInsert.ExecuteNonQuery()
-                End Using
-
-                MessageBox.Show("Report Card uploaded successfully!")
-            End If
-
-        Catch ex As Exception
-            MessageBox.Show("Error processing file upload: " & ex.Message)
-        Finally
-            conn.Close()
-        End Try
+        Using cmd As New MySqlCommand(sql, conn, transaction)
+            cmd.Parameters.AddWithValue("@StudentID", studentID)
+            cmd.Parameters.AddWithValue("@DocumentType", formattedDocumentType)
+            cmd.Parameters.AddWithValue("@FileData", fileData)
+            cmd.Parameters.AddWithValue("@SubmissionDate", uploadDate)
+            cmd.Parameters.AddWithValue("@ParentID", cmbParentGuardian.SelectedValue.ToString())
+            cmd.ExecuteNonQuery()
+        End Using
     End Sub
 
 
@@ -1275,51 +1246,65 @@ Public Class PersonForm
     End Sub
 
     Private Sub DeleteStudent()
+        If String.IsNullOrEmpty(selectedStudentID) Then
+            MessageBox.Show("No student selected for deletion.")
+            Return
+        End If
+
+        opencon(db_name)
+        Dim transaction As MySqlTransaction = conn.BeginTransaction()
+
         Try
-            ' Begin with deleting junction table records to avoid constraint violations
-            ' 1. Delete taken_by records (subject enrollments)
-            Dim deleteTakenBy As String = "DELETE FROM taken_by WHERE Student_ID = " & selectedStudentID
-            readquery(deleteTakenBy)
-            If cmdread IsNot Nothing Then cmdread.Close()
+            ' Delete related records first
+            Dim queries As New List(Of String) From {
+                "DELETE FROM taken_by WHERE Student_ID = @StudentID",
+                "DELETE FROM belongs_to WHERE Student_ID = @StudentID",
+                "DELETE FROM Belong_to WHERE Student_ID = @StudentID",
+                "DELETE FROM Requirements WHERE Student_ID = @StudentID",
+                "DELETE FROM Student WHERE Student_ID = @StudentID"
+            }
 
-            ' 2. Delete belongs_to records (section assignments)
-            Dim deleteBelongsTo As String = "DELETE FROM belongs_to WHERE Student_ID = " & selectedStudentID
-            readquery(deleteBelongsTo)
-            If cmdread IsNot Nothing Then cmdread.Close()
+            For Each query As String In queries
+                Using cmd As New MySqlCommand(query, conn, transaction)
+                    cmd.Parameters.AddWithValue("@StudentID", selectedStudentID)
+                    cmd.ExecuteNonQuery()
+                End Using
+            Next
 
-            ' 3. Delete Belong_to records (parent/guardian relationships)
-            Dim deleteBelongTo As String = "DELETE FROM Belong_to WHERE Student_ID = " & selectedStudentID
-            readquery(deleteBelongTo)
-            If cmdread IsNot Nothing Then cmdread.Close()
+            ' Update totals
+            UpdateTotalStudents(transaction)
 
-            ' 4. Finally delete the student record
-            Dim deleteStudent As String = "DELETE FROM Student WHERE Student_ID = " & selectedStudentID
-            readquery(deleteStudent)
-            If cmdread IsNot Nothing Then cmdread.Close()
+            transaction.Commit()
+            MessageBox.Show("Student and all related records have been successfully deleted.", "Deletion Successful", MessageBoxButtons.OK, MessageBoxIcon.Information)
 
-            ' 5. Reset the auto increment if needed
-            Dim resetAutoIncrement As String = "ALTER TABLE Student AUTO_INCREMENT = 1"
-            readquery(resetAutoIncrement)
-            If cmdread IsNot Nothing Then cmdread.Close()
-
-            ' 6. Update section totals
-            UpdateTotalStudents()
-
-            MessageBox.Show("Student and related records successfully deleted.")
-
-            ' Clear form fields
-            ClearStudentFields()
-        Catch ex As MySqlException
-            Debug.WriteLine("MySqlException in DeleteStudent: " & ex.ToString())
-            MessageBox.Show("Error deleting student: " & ex.Message)
         Catch ex As Exception
-            Debug.WriteLine("Exception in DeleteStudent: " & ex.ToString())
-            MessageBox.Show("Error deleting student: " & ex.Message)
+            transaction.Rollback()
+            MessageBox.Show("An error occurred during deletion: " & ex.Message, "Deletion Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        Finally
+            conn.Close()
         End Try
+
+        ' Refresh UI
+        ClearStudentFields()
+        RetrieveStudent() ' Or your method to refresh the student list
     End Sub
 
+    Private Function IsStudentDuplicate(firstName As String, lastName As String, dob As DateTime) As Boolean
+        Using connection As New MySqlConnection(GetConnectionString())
+            connection.Open()
+            Dim query As String = "SELECT COUNT(*) FROM student WHERE Fname = @Fname AND Lname = @Lname AND DOB = @DOB"
+            Using command As New MySqlCommand(query, connection)
+                command.Parameters.AddWithValue("@Fname", firstName)
+                command.Parameters.AddWithValue("@Lname", lastName)
+                command.Parameters.AddWithValue("@DOB", dob.ToString("yyyy-MM-dd"))
+                Dim count As Integer = Convert.ToInt32(command.ExecuteScalar())
+                Return count > 0
+            End Using
+        End Using
+    End Function
+
     Private Sub ClearStudentFields()
-        selectedStudentID = ""
+        ' Clear all input fields for the student form
         txtFname.Clear()
         txtMname.Clear()
         txtLname.Clear()
@@ -1327,151 +1312,116 @@ Public Class PersonForm
         dtpDOB.Value = DateTime.Today
         cmbSex.SelectedIndex = -1
         cmbGradeLevel.SelectedIndex = -1
-        cmbSection.SelectedIndex = -1
-        cmbParentGuardian.SelectedIndex = -1
-        cmbClassRoomAss.SelectedIndex = -1
+        cmbSection.DataSource = Nothing
+        cmbClassRoomAss.DataSource = Nothing
 
-        ' Clear checked subjects
+        ' Uncheck all subjects
         For i As Integer = 0 To clbSubjects.Items.Count - 1
             clbSubjects.SetItemChecked(i, False)
         Next
+
+        ' Reset file upload link labels
+        LinkLabel1.Text = ""
+        LinkLabel1.Tag = Nothing
+        LinkLabel1.Visible = False
+        LinkLabel2.Text = ""
+        LinkLabel2.Tag = Nothing
+        LinkLabel2.Visible = False
     End Sub
 
     Private Sub UpdateStudent()
-        Try
-            ' Validate student inputs.
-            If Not ValidateStudentInputs() Then Exit Sub
+        If Not ValidateStudentInputs() Then Exit Sub
 
-            ' Convert Sex value for database
-            Dim sexForDB As String = If(cmbSex.SelectedItem.ToString() = "Female", "F", "M")
+        ' The duplicate check should be adjusted to exclude the current student ID
+        ' If IsStudentDuplicate(txtFname.Text.Trim(), txtLname.Text.Trim(), dtpDOB.Value) Then
+        '     MessageBox.Show("A student with the same first name, last name, and birthdate already exists.", "Duplicate Student", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+        '     Return
+        ' End If
+            ' End If
 
-            ' 1. Update the Student record
-            Dim sqlStudent As String = "UPDATE Student SET " &
-                "Fname = '" & txtFname.Text.Trim() & "', " &
-                "Midname = '" & txtMname.Text.Trim() & "', " &
-                "Lname = '" & txtLname.Text.Trim() & "', " &
-                "Address = '" & txtAddress.Text.Trim() & "', " &
-                "DOB = '" & dtpDOB.Value.ToString("yyyy-MM-dd") & "', " &
-                "Sex = '" & sexForDB & "', " &
-                "Grade_Level_ID = " & cmbGradeLevel.SelectedValue.ToString() & " " &
-                "WHERE Student_ID = " & selectedStudentID
+            opencon(db_name)
+            Dim transaction As MySqlTransaction = conn.BeginTransaction()
 
-            readquery(sqlStudent)
-            If cmdread IsNot Nothing Then cmdread.Close()
+            Try
+                ' Convert Sex value for database
+                Dim sexForDB As String = If(cmbSex.SelectedItem.ToString() = "Female", "F", "M")
 
-            ' 2. Compute current school year
-            Dim currentSchoolYear As String = DateTime.Now.Year.ToString() & "-" & (DateTime.Now.Year + 1).ToString()
+                ' 1. Update the Student record
+                Dim sqlStudent As String = "UPDATE Student SET Fname = @Fname, Midname = @Midname, Lname = @Lname, Address = @Address, DOB = @DOB, Sex = @Sex, Grade_Level_ID = @GradeLevelID WHERE Student_ID = @StudentID"
+                Using cmdStudent As New MySqlCommand(sqlStudent, conn, transaction)
+                    cmdStudent.Parameters.AddWithValue("@Fname", txtFname.Text.Trim())
+                    cmdStudent.Parameters.AddWithValue("@Midname", txtMname.Text.Trim())
+                    cmdStudent.Parameters.AddWithValue("@Lname", txtLname.Text.Trim())
+                    cmdStudent.Parameters.AddWithValue("@Address", txtAddress.Text.Trim())
+                    cmdStudent.Parameters.AddWithValue("@DOB", dtpDOB.Value.ToString("yyyy-MM-dd"))
+                    cmdStudent.Parameters.AddWithValue("@Sex", sexForDB)
+                    cmdStudent.Parameters.AddWithValue("@GradeLevelID", cmbGradeLevel.SelectedValue.ToString())
+                    cmdStudent.Parameters.AddWithValue("@StudentID", selectedStudentID)
+                    cmdStudent.ExecuteNonQuery()
+                End Using
 
-            ' 3. Update section assignment (belongs_to)
-            ' First check if an assignment exists
-            Dim checkSection As String = "SELECT COUNT(*) FROM belongs_to WHERE Student_ID = " & selectedStudentID
-            readquery(checkSection)
-            Dim hasSectionAssignment As Boolean = False
-            If cmdread IsNot Nothing AndAlso cmdread.Read() Then
-                hasSectionAssignment = (Convert.ToInt32(cmdread(0)) > 0)
-            End If
-            cmdread.Close()
+                ' 2. Update section and parent assignments
+                Dim currentSchoolYear As String = DateTime.Now.Year.ToString() & "-" & (DateTime.Now.Year + 1).ToString()
+                Dim sqlBelongsTo As String = "INSERT INTO belongs_to (Student_ID, Section_ID, SchoolYear) VALUES (@StudentID, @SectionID, @SchoolYear) ON DUPLICATE KEY UPDATE Section_ID = @SectionID, SchoolYear = @SchoolYear"
+                Using cmdBelongsTo As New MySqlCommand(sqlBelongsTo, conn, transaction)
+                    cmdBelongsTo.Parameters.AddWithValue("@StudentID", selectedStudentID)
+                    cmdBelongsTo.Parameters.AddWithValue("@SectionID", cmbSection.SelectedValue.ToString())
+                    cmdBelongsTo.Parameters.AddWithValue("@SchoolYear", currentSchoolYear)
+                    cmdBelongsTo.ExecuteNonQuery()
+                End Using
 
-            If hasSectionAssignment Then
-                ' Update existing assignment
-                Dim sqlBelongsTo As String = "UPDATE belongs_to SET " &
-                    "Section_ID = " & cmbSection.SelectedValue.ToString() & ", " &
-                    "SchoolYear = '" & currentSchoolYear & "' " &
-                    "WHERE Student_ID = " & selectedStudentID
-                readquery(sqlBelongsTo)
-                If cmdread IsNot Nothing Then cmdread.Close()
-            Else
-                ' Create new assignment
-                Dim sqlBelongsTo As String = "INSERT INTO belongs_to (Section_ID, Student_ID, SchoolYear) " &
-                    "VALUES (" & cmbSection.SelectedValue.ToString() & ", " & selectedStudentID & ", '" & currentSchoolYear & "')"
-                readquery(sqlBelongsTo)
-                If cmdread IsNot Nothing Then cmdread.Close()
-            End If
+                Dim sqlBelongToParent As String = "INSERT INTO Belong_to (Student_ID, Parent_Guardian_ID) VALUES (@StudentID, @ParentID) ON DUPLICATE KEY UPDATE Parent_Guardian_ID = @ParentID"
+                Using cmdBelongToParent As New MySqlCommand(sqlBelongToParent, conn, transaction)
+                    cmdBelongToParent.Parameters.AddWithValue("@StudentID", selectedStudentID)
+                    cmdBelongToParent.Parameters.AddWithValue("@ParentID", cmbParentGuardian.SelectedValue.ToString())
+                    cmdBelongToParent.ExecuteNonQuery()
+                End Using
 
-            ' 4. Update parent/guardian assignment (Belong_to)
-            ' First check if an assignment exists
-            Dim checkParent As String = "SELECT COUNT(*) FROM Belong_to WHERE Student_ID = " & selectedStudentID
-            readquery(checkParent)
-            Dim hasParentAssignment As Boolean = False
-            If cmdread IsNot Nothing AndAlso cmdread.Read() Then
-                hasParentAssignment = (Convert.ToInt32(cmdread(0)) > 0)
-            End If
-            cmdread.Close()
+                ' 3. Update subject enrollments
+                Dim deleteSubjects As String = "DELETE FROM taken_by WHERE Student_ID = @StudentID"
+                Using cmdDelete As New MySqlCommand(deleteSubjects, conn, transaction)
+                    cmdDelete.Parameters.AddWithValue("@StudentID", selectedStudentID)
+                    cmdDelete.ExecuteNonQuery()
+                End Using
 
-            If hasParentAssignment Then
-                ' Update existing assignment
-                Dim sqlBelongTo As String = "UPDATE Belong_to SET " &
-                    "Parent_Guardian_ID = " & cmbParentGuardian.SelectedValue.ToString() & " " &
-                    "WHERE Student_ID = " & selectedStudentID
-                readquery(sqlBelongTo)
-                If cmdread IsNot Nothing Then cmdread.Close()
-            Else
-                ' Create new assignment
-                Dim sqlBelongTo As String = "INSERT INTO Belong_to (Parent_Guardian_ID, Student_ID, NumOf_Related_Students) " &
-                    "VALUES (" & cmbParentGuardian.SelectedValue.ToString() & ", " & selectedStudentID & ", 1)"
-                readquery(sqlBelongTo)
-                If cmdread IsNot Nothing Then cmdread.Close()
-            End If
+                For i As Integer = 0 To clbSubjects.CheckedItems.Count - 1
+                    Dim subjectDict As Dictionary(Of Integer, Integer) = DirectCast(clbSubjects.Tag, Dictionary(Of Integer, Integer))
+                    Dim subjectID As Integer = subjectDict(clbSubjects.CheckedIndices(i))
+                    Dim sqlTakenBy As String = "INSERT INTO taken_by (Subject_ID, Student_ID, Grades, Year) VALUES (@SubjectID, @StudentID, 0, @Year)"
+                    Using cmdTakenBy As New MySqlCommand(sqlTakenBy, conn, transaction)
+                        cmdTakenBy.Parameters.AddWithValue("@SubjectID", subjectID)
+                        cmdTakenBy.Parameters.AddWithValue("@StudentID", selectedStudentID)
+                        cmdTakenBy.Parameters.AddWithValue("@Year", currentSchoolYear)
+                        cmdTakenBy.ExecuteNonQuery()
+                    End Using
+                Next
 
-            ' 5. Update subject enrollments (taken_by)
-            ' First delete all existing subject enrollments
-            Dim deleteSubjects As String = "DELETE FROM taken_by WHERE Student_ID = " & selectedStudentID
-            readquery(deleteSubjects)
-            If cmdread IsNot Nothing Then cmdread.Close()
+                ' 4. Upload files
+                If selectedFileData IsNot Nothing AndAlso Not String.IsNullOrEmpty(selectedFileName) Then
+                    UploadStudentFile(selectedStudentID, selectedFileName, selectedFileData, transaction)
+                End If
+                If selectedReportCardData IsNot Nothing AndAlso Not String.IsNullOrEmpty(selectedReportCardName) Then
+                    UploadReportCard(selectedStudentID, selectedReportCardName, selectedReportCardData, transaction)
+                End If
 
-            ' Add new subject enrollments
-            For i As Integer = 0 To clbSubjects.CheckedItems.Count - 1
-                Dim checkedIndex As Integer = clbSubjects.CheckedIndices(i)
+                ' 5. Update totals
+                UpdateTotalStudents(transaction)
 
-                ' Retrieve the Subject_ID from the dictionary
-                Dim subjectDict As Dictionary(Of Integer, Integer) = DirectCast(clbSubjects.Tag, Dictionary(Of Integer, Integer))
-                Dim subjectID As Integer = subjectDict(checkedIndex)
+                transaction.Commit()
+                MessageBox.Show("Student information updated successfully!")
 
-                ' Insert the subject assignment
-                Dim sqlTakenBy As String = "INSERT INTO taken_by (Subject_ID, Student_ID, Grades, Year) VALUES (" &
-                    subjectID & ", " & selectedStudentID & ", 0, '" & currentSchoolYear & "')"
-                readquery(sqlTakenBy)
-                If cmdread IsNot Nothing Then cmdread.Close()
-            Next
+            Catch ex As Exception
+                transaction.Rollback()
+                MessageBox.Show("An error occurred while updating the student: " & ex.Message, "Update Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            Finally
+                conn.Close()
+            End Try
 
-            ' 6. Update section totals
-            Dim sqlUpdateSection As String = "UPDATE Section SET Total_Students = (SELECT COUNT(*) FROM belongs_to WHERE Section_ID = " & cmbSection.SelectedValue.ToString() & ") " &
-                "WHERE Section_ID = " & cmbSection.SelectedValue.ToString()
-            readquery(sqlUpdateSection)
-            If cmdread IsNot Nothing Then cmdread.Close()
-
-            ' 7. Update overall grade level totals
-            UpdateTotalStudents()
-
-            ' Step 6: Upload file if a file was selected
-            If selectedFileData IsNot Nothing AndAlso Not String.IsNullOrEmpty(selectedFileName) Then
-                UploadStudentFile(selectedStudentID, selectedFileName, selectedFileData)
-            End If
-
-            If selectedReportCardData IsNot Nothing AndAlso Not String.IsNullOrEmpty(selectedReportCardName) Then
-                UploadReportCard(selectedStudentID, selectedReportCardName, selectedReportCardData)
-            End If
-
-            BindUploadedFileToLinkLabel(LinkLabel1, selectedFileName, selectedFileData)
-            BindUploadedFileToLinkLabel(LinkLabel2, selectedReportCardName, selectedReportCardData)
-
-            MessageBox.Show("Student information updated successfully!")
-
-            ' Refresh the student data
+            ' Refresh UI
+            ClearStudentFields()
             RetrieveStudent()
-        Catch ex As MySqlException
-            Debug.WriteLine("MySqlException in UpdateStudent: " & ex.ToString())
-            MessageBox.Show("Error updating student: " & ex.Message)
-        Catch ex As Exception
-            Debug.WriteLine("Exception in UpdateStudent: " & ex.ToString())
-            MessageBox.Show("Error updating student: " & ex.Message)
-        End Try
-    End Sub
+        End Sub
 
-    ''' <summary>
-    ''' Binds the file details to a LinkLabel.
-    ''' The fileData is stored in the LinkLabel's Tag property to be retrieved/used later.
-    ''' </summary>
     ''' <param name="linkLabel">The LinkLabel to bind the file to.</param>
     ''' <param name="fileName">The file name to display.</param>
     ''' <param name="fileData">The file data as a byte array.</param>

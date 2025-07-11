@@ -23,6 +23,7 @@ Partial Class AcademicForm
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
         Panel1 = New Panel()
+        lblHint = New Label()
         btnSearchAcademicEntity = New Button()
         txtSearchAcademicEntity = New TextBox()
         lblsearch = New Label()
@@ -41,7 +42,6 @@ Partial Class AcademicForm
         label2 = New Label()
         label1 = New Label()
         Label4 = New Label()
-        lblHint = New Label()
         Panel1.SuspendLayout()
         gbAcademicForms.SuspendLayout()
         SuspendLayout()
@@ -60,6 +60,17 @@ Partial Class AcademicForm
         Panel1.Name = "Panel1"
         Panel1.Size = New Size(665, 433)
         Panel1.TabIndex = 0
+        ' 
+        ' lblHint
+        ' 
+        lblHint.AutoSize = True
+        lblHint.Font = New Font("Segoe UI", 6F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        lblHint.ForeColor = SystemColors.ControlDarkDark
+        lblHint.Location = New Point(246, 55)
+        lblHint.Name = "lblHint"
+        lblHint.Size = New Size(190, 11)
+        lblHint.TabIndex = 38
+        lblHint.Text = "*Use [Subject Name::Grade Level] for better filtering"
         ' 
         ' btnSearchAcademicEntity
         ' 
@@ -230,17 +241,6 @@ Partial Class AcademicForm
         Label4.Name = "Label4"
         Label4.Size = New Size(0, 15)
         Label4.TabIndex = 3
-        ' 
-        ' lblHint
-        ' 
-        lblHint.AutoSize = True
-        lblHint.Font = New Font("Segoe UI", 6F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblHint.ForeColor = SystemColors.ControlDarkDark
-        lblHint.Location = New Point(246, 55)
-        lblHint.Name = "lblHint"
-        lblHint.Size = New Size(190, 11)
-        lblHint.TabIndex = 38
-        lblHint.Text = "*Use [Subject Name::Grade Level] for better filtering"
         ' 
         ' AcademicForm
         ' 

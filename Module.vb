@@ -1,4 +1,4 @@
-﻿Imports MySql.Data.MySqlClient
+Imports MySql.Data.MySqlClient
 Module Module1
     Public DisplayTracker As Integer
     Public conn As New MySqlConnection
@@ -9,6 +9,11 @@ Module Module1
     Public db_pwd As String = ""
     Public db_name As String = "mcesdb_test2"
     Public strconnection As String = "server = " & db_server & "; uid =" & db_uid & "; password =" & db_pwd & "; database =" & db_name & ""
+
+    Public Function GetConnectionString() As String
+        Return strconnection
+    End Function
+
     Public Sub opencon(ByVal db_name As String)
         Try
             With conn
@@ -30,7 +35,9 @@ Module Module1
                 cmdread = .ExecuteReader
             End With
         Catch ex As Exception
-
+            MessageBox.Show("A database error occurred: " & ex.Message, "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            ' Re-throw the exception to halt execution and prevent further errors.
+            Throw
         End Try
     End Sub
 

@@ -1,4 +1,4 @@
-﻿<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()> _
+<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()> _
 Partial Class PersonForm
     Inherits System.Windows.Forms.UserControl
 
@@ -22,6 +22,8 @@ Partial Class PersonForm
     'Do not modify it using the code editor.
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
+        Me.lblBirthCertificateFileName = New System.Windows.Forms.Label()
+        Me.lblReportCardFileName = New System.Windows.Forms.Label()
         pnlStudent = New Panel()
         GroupBox1 = New GroupBox()
         btnBack = New Button()
@@ -113,6 +115,8 @@ Partial Class PersonForm
         GroupBox1.Controls.Add(btnSearchStudent)
         GroupBox1.Controls.Add(txtSearchStudent)
         GroupBox1.Controls.Add(lblSearchStudent)
+        GroupBox1.Controls.Add(Me.lblReportCardFileName)
+        GroupBox1.Controls.Add(Me.lblBirthCertificateFileName)
         GroupBox1.Controls.Add(clbSubjects)
         GroupBox1.Controls.Add(cmbClassRoomAss)
         GroupBox1.Controls.Add(btnAddNewParent)
@@ -143,7 +147,7 @@ Partial Class PersonForm
         GroupBox1.Controls.Add(Label2)
         GroupBox1.Location = New Point(10, 9)
         GroupBox1.Name = "GroupBox1"
-        GroupBox1.Size = New Size(644, 417)
+        GroupBox1.Size = New Size(644, 509)
         GroupBox1.TabIndex = 32
         GroupBox1.TabStop = False
         GroupBox1.Text = "Enrollment Form"
@@ -161,7 +165,7 @@ Partial Class PersonForm
         ' LinkLabel2
         ' 
         LinkLabel2.AutoSize = True
-        LinkLabel2.Location = New Point(530, 266)
+        LinkLabel2.Location = New Point(530, 358)
         LinkLabel2.Name = "LinkLabel2"
         LinkLabel2.Size = New Size(63, 15)
         LinkLabel2.TabIndex = 40
@@ -171,7 +175,7 @@ Partial Class PersonForm
         ' LinkLabel1
         ' 
         LinkLabel1.AutoSize = True
-        LinkLabel1.Location = New Point(530, 227)
+        LinkLabel1.Location = New Point(530, 319)
         LinkLabel1.Name = "LinkLabel1"
         LinkLabel1.Size = New Size(63, 15)
         LinkLabel1.TabIndex = 39
@@ -226,7 +230,7 @@ Partial Class PersonForm
         clbSubjects.FormattingEnabled = True
         clbSubjects.Location = New Point(449, 159)
         clbSubjects.Name = "clbSubjects"
-        clbSubjects.Size = New Size(100, 58)
+        clbSubjects.Size = New Size(100, 150)
         clbSubjects.TabIndex = 33
         ' 
         ' cmbClassRoomAss
@@ -253,7 +257,7 @@ Partial Class PersonForm
         ' btnSaveStudent
         ' 
         btnSaveStudent.Anchor = AnchorStyles.None
-        btnSaveStudent.Location = New Point(449, 355)
+        btnSaveStudent.Location = New Point(449, 447)
         btnSaveStudent.Name = "btnSaveStudent"
         btnSaveStudent.Size = New Size(100, 42)
         btnSaveStudent.TabIndex = 30
@@ -263,7 +267,7 @@ Partial Class PersonForm
         ' btnUploadReportCard
         ' 
         btnUploadReportCard.Anchor = AnchorStyles.None
-        btnUploadReportCard.Location = New Point(449, 263)
+        btnUploadReportCard.Location = New Point(449, 355)
         btnUploadReportCard.Name = "btnUploadReportCard"
         btnUploadReportCard.Size = New Size(75, 23)
         btnUploadReportCard.TabIndex = 29
@@ -273,7 +277,7 @@ Partial Class PersonForm
         ' btnUploadBirthCertificate
         ' 
         btnUploadBirthCertificate.Anchor = AnchorStyles.None
-        btnUploadBirthCertificate.Location = New Point(449, 223)
+        btnUploadBirthCertificate.Location = New Point(449, 315)
         btnUploadBirthCertificate.Name = "btnUploadBirthCertificate"
         btnUploadBirthCertificate.Size = New Size(75, 23)
         btnUploadBirthCertificate.TabIndex = 28
@@ -284,7 +288,7 @@ Partial Class PersonForm
         ' 
         Label14.Anchor = AnchorStyles.None
         Label14.AutoSize = True
-        Label14.Location = New Point(351, 227)
+        Label14.Location = New Point(351, 319)
         Label14.Name = "Label14"
         Label14.Size = New Size(92, 15)
         Label14.TabIndex = 27
@@ -294,7 +298,7 @@ Partial Class PersonForm
         ' 
         Label15.Anchor = AnchorStyles.None
         Label15.AutoSize = True
-        Label15.Location = New Point(343, 257)
+        Label15.Location = New Point(343, 349)
         Label15.Name = "Label15"
         Label15.Size = New Size(100, 30)
         Label15.TabIndex = 26
@@ -434,7 +438,7 @@ Partial Class PersonForm
         Label7.AutoSize = True
         Label7.Location = New Point(95, 198)
         Label7.Name = "Label7"
-        Label7.Size = New Size(28, 15)
+        Label7.Size = New Size(27, 15)
         Label7.TabIndex = 6
         Label7.Text = "Sex:"
         ' 
@@ -457,6 +461,22 @@ Partial Class PersonForm
         Label5.Size = New Size(66, 15)
         Label5.TabIndex = 4
         Label5.Text = "Last Name:"
+        ' 
+        ' lblBirthCertificateFileName
+        ' 
+        Me.lblBirthCertificateFileName.AutoSize = True
+        Me.lblBirthCertificateFileName.Location = New System.Drawing.Point(530, 319)
+        Me.lblBirthCertificateFileName.Name = "lblBirthCertificateFileName"
+        Me.lblBirthCertificateFileName.Size = New System.Drawing.Size(0, 15)
+        Me.lblBirthCertificateFileName.TabIndex = 42
+        ' 
+        ' lblReportCardFileName
+        ' 
+        Me.lblReportCardFileName.AutoSize = True
+        Me.lblReportCardFileName.Location = New System.Drawing.Point(530, 359)
+        Me.lblReportCardFileName.Name = "lblReportCardFileName"
+        Me.lblReportCardFileName.Size = New System.Drawing.Size(0, 15)
+        Me.lblReportCardFileName.TabIndex = 43
         ' 
         ' Label4
         ' 
@@ -496,7 +516,6 @@ Partial Class PersonForm
         pnlPersonDetails.Controls.Add(txtSearchPerson)
         pnlPersonDetails.Controls.Add(lblsearch)
         pnlPersonDetails.Controls.Add(lblGB)
-        pnlPersonDetails.Controls.Add(lblpdname)
         pnlPersonDetails.Dock = DockStyle.Fill
         pnlPersonDetails.Location = New Point(20, 20)
         pnlPersonDetails.Name = "pnlPersonDetails"
@@ -684,7 +703,7 @@ Partial Class PersonForm
         Label16.AutoSize = True
         Label16.Location = New Point(153, 172)
         Label16.Name = "Label16"
-        Label16.Size = New Size(28, 15)
+        Label16.Size = New Size(27, 15)
         Label16.TabIndex = 17
         Label16.Text = "Sex:"
         ' 
@@ -730,7 +749,7 @@ Partial Class PersonForm
         lblpdname.Dock = DockStyle.Fill
         lblpdname.Location = New Point(10, 10)
         lblpdname.Name = "lblpdname"
-        lblpdname.Size = New Size(106, 15)
+        lblpdname.Size = New Size(107, 15)
         lblpdname.TabIndex = 23
         lblpdname.Text = "Add Teacher Form:"
         ' 
@@ -791,6 +810,8 @@ Partial Class PersonForm
     Friend WithEvents LinkLabel2 As LinkLabel
     Friend WithEvents LinkLabel1 As LinkLabel
     Friend WithEvents btnBack As Button
+    Friend WithEvents lblBirthCertificateFileName As Label
+    Friend WithEvents lblReportCardFileName As Label
     Friend WithEvents pnlPersonDetails As Panel
     Friend WithEvents Button1 As Button
     Friend WithEvents btnSearchPerson As Button

@@ -1,4 +1,4 @@
-﻿Imports System.Text
+Imports System.Text
 Imports MySql.Data.MySqlClient
 Imports ZstdSharp.Unsafe
 Imports System.Security.Cryptography
@@ -15,24 +15,17 @@ Public Class MainForm
     Private Sub LoadUserControl(newControl As UserControl)
         Debug.WriteLine("LoadUserControl called. New control type: " & newControl.GetType().ToString())
 
-        ' Option 1: Directly clear the form's controls (if that's your design)
         If currentControl IsNot Nothing Then
             Debug.WriteLine("Removing current control: " & currentControl.GetType().ToString())
             Controls.Remove(currentControl)
         End If
 
-
-
-        ' Set new UserControl for this example using the MainForm itself:
         currentControl = newControl
         newControl.Dock = DockStyle.Fill
         Debug.WriteLine("Adding new control: " & newControl.GetType().ToString())
         Controls.Add(newControl)
         newControl.BringToFront()
         Debug.WriteLine("New control should now be visible on the form.")
-
-
-
     End Sub
 
     ' Menu item click events—each sets DisplayTracker and then loads the appropriate control
@@ -100,6 +93,7 @@ Public Class MainForm
         Debug.WriteLine("MainForm_Load event called.")
         InitializeGradeLevels()
         MenuStrip1.Visible = False
+        btnCancel.Visible = False
 
         txtPassword2.Visible = False
         lblPassword2.Visible = False
@@ -217,8 +211,8 @@ Public Class MainForm
                 NumericUpDown2.Visible = True
                 LoadTeacherData(1)
 
-                LoadSections()
-                LoadGradeLevels()
+                LoadGradeLevels(cmbGradeLevel)
+                LoadSections(cmbGradeLevel, cmbSection)
                 LoadEnrollmentChart()
 
                 Panel1.Visible = True
@@ -260,6 +254,7 @@ Public Class MainForm
     Private Sub LinkLabel1_LinkClicked(sender As Object, e As LinkLabelLinkClickedEventArgs) Handles LinkLabel1.LinkClicked
         ' Switch mode to "Creating Account"
         isCreatingAccount = True
+        btnCancel.Visible = True
 
         ' Show the second password field (for confirmation)
         txtPassword2.Visible = True
@@ -269,13 +264,13 @@ Public Class MainForm
         Button1.Text = "Save"
     End Sub
 
-    Private Sub RegisterUser(username As String, password1 As String, password2 As String)
-        If String.IsNullOrEmpty(username) OrElse String.IsNullOrEmpty(password1) OrElse String.IsNullOrEmpty(password2) Then
+    Private Sub RegisterUser(username As String, password_1 As String, password_2 As String)
+        If String.IsNullOrEmpty(username) OrElse String.IsNullOrEmpty(password_1) OrElse String.IsNullOrEmpty(password_2) Then
             MessageBox.Show("Please fill in all fields.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
             Exit Sub
         End If
 
-        If password1 <> password2 Then
+        If password_1 <> password_2 Then
             MessageBox.Show("Passwords do not match!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
             Exit Sub
         End If
@@ -284,7 +279,7 @@ Public Class MainForm
             opencon(db_name)
 
             ' Hash password
-            Dim hashedPassword As String = ComputeSHA256Hash(password1)
+            Dim hashedPassword As String = ComputeSHA256Hash(password_1)
 
             ' Insert new user into the database
             Dim sql As String = "INSERT INTO Admin (Adminname, Password) VALUES (@Username, @Password)"
@@ -301,6 +296,7 @@ Public Class MainForm
             txtPassword2.Visible = False
             lblPassword2.Visible = False
             Button1.Text = "Login"
+            btnCancel.Visible = False
 
         Catch ex As Exception
             MessageBox.Show("Error creating account: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
@@ -309,69 +305,81 @@ Public Class MainForm
         End Try
     End Sub
 
+    Private Sub btnCancel_Click(sender As Object, e As EventArgs) Handles btnCancel.Click
+        ' Reset form back to login mode
+        isCreatingAccount = False
+        txtPassword2.Visible = False
+        lblPassword2.Visible = False
+        Button1.Text = "Login"
+        btnCancel.Visible = False
+    End Sub
+
     Private Function ComputeSHA256Hash(input As String) As String
-        Dim sha256 As SHA256 = sha256.Create()
+        Dim sha256 As SHA256 = SHA256.Create()
         Dim bytes As Byte() = Encoding.UTF8.GetBytes(input)
         Dim hash As Byte() = sha256.ComputeHash(bytes)
         Return BitConverter.ToString(hash).Replace("-", "").ToLower()
     End Function
 
-    Private Sub LoadStudentData(Optional page As Integer = 1)
+    Private Async Sub LoadStudentData(Optional page As Integer = 1)
+        Me.Cursor = Cursors.WaitCursor
+        dgvStudent.Enabled = False
+
         Try
-            ' Open MySQL connection using your existing opencon() method.
-            opencon(db_name)
+            Dim dt As DataTable = Await Task.Run(Function()
+                                                     Dim pageSize As Integer = 10
+                                                     Dim offset As Integer = (page - 1) * pageSize
+                                                     Dim dataTable As New DataTable()
 
-            Dim pageSize As Integer = 10
-            Dim offset As Integer = (page - 1) * pageSize
+                                                     Using connection As New MySqlConnection(GetConnectionString())
+                                                         connection.Open()
+                                                         Dim query As String = "SELECT " &
+                        "s.Student_ID, " &
+                        "CONCAT(s.Lname, ', ', s.Fname, ' ', s.Midname) AS StudentName, " &
+                        "s.DOB, " &
+                        "s.Sex, " &
+                        "GROUP_CONCAT(DISTINCT CONCAT(pg.Fname, ' ', pg.Lname) SEPARATOR ', ') AS ParentGuardian, " &
+                        "MAX(sec.Section_Name) AS Section, " &
+                        "MAX(gl.Grade_Name) AS GradeLevel, " &
+                        "MAX(r.Submission_Status) AS RequirementStatus " &
+                        "FROM student s " &
+                        "LEFT JOIN belong_to bt ON s.Student_ID = bt.Student_ID " &
+                        "LEFT JOIN parent_guardian pg ON bt.Parent_Guardian_ID = pg.Parent_Guardian_ID " &
+                        "LEFT JOIN belongs_to bsec ON s.Student_ID = bsec.Student_ID " &
+                        "LEFT JOIN section sec ON bsec.Section_ID = sec.Section_ID " &
+                        "LEFT JOIN grade_level gl ON s.Grade_Level_ID = gl.Grade_Level_ID " &
+                        "LEFT JOIN requirements r ON s.Student_ID = r.Student_ID " &
+                        "GROUP BY s.Student_ID " &
+                        "ORDER BY s.Student_ID " &
+                        "LIMIT " & pageSize & " OFFSET " & offset
 
-            ' Modified SQL query to avoid duplicate rows
-            Dim query As String = "SELECT DISTINCT " &
-        "s.Student_ID, " &
-        "CONCAT(s.Lname, ', ', s.Fname, ' ', s.Midname) AS StudentName, " &
-        "s.DOB, " &
-        "s.Sex, " &
-        "CONCAT(pg.Lname, ', ', pg.Fname, ' ', pg.Midname) AS ParentGuardian, " &
-        "sec.Section_Name AS Section, " &
-        "gl.Grade_Name AS GradeLevel, " &
-        "r.Submission_Status AS RequirementStatus " &
-        "FROM student s " &
-        "LEFT JOIN (SELECT DISTINCT Student_ID, Parent_Guardian_ID FROM belong_to) bt ON s.Student_ID = bt.Student_ID " &
-        "LEFT JOIN parent_guardian pg ON bt.Parent_Guardian_ID = pg.Parent_Guardian_ID " &
-        "LEFT JOIN (SELECT DISTINCT Student_ID, Section_ID FROM belongs_to) bsec ON s.Student_ID = bsec.Student_ID " &
-        "LEFT JOIN section sec ON bsec.Section_ID = sec.Section_ID " &
-        "LEFT JOIN grade_level gl ON s.Grade_Level_ID = gl.Grade_Level_ID " &
-        "LEFT JOIN (SELECT DISTINCT Student_ID, Submission_Status FROM requirements) r ON s.Student_ID = r.Student_ID " &
-        "ORDER BY s.Student_ID " &
-        "LIMIT " & pageSize & " OFFSET " & offset
+                                                         Using adapter As New MySqlDataAdapter(query, connection)
+                                                             adapter.Fill(dataTable)
+                                                         End Using
+                                                     End Using
+                                                     Return dataTable
+                                                 End Function)
 
-            Dim dt As New DataTable()
-            Using adapter As New MySqlDataAdapter(query, conn)
-                adapter.Fill(dt)
-            End Using
-
-            ' Bind the DataTable as the DataSource for dgvStudent.
+            dgvStudent.SuspendLayout()
             dgvStudent.DataSource = dt
 
-            ' Map the original column names to user-friendly headers.
             Dim friendlyHeaders As New Dictionary(Of String, String) From {
-        {"Student_ID", "Student ID"},
-        {"StudentName", "Student Name"},
-        {"DOB", "Date of Birth"},
-        {"Sex", "Sex"},
-        {"ParentGuardian", "Parent/Guardian"},
-        {"Section", "Section"},
-        {"GradeLevel", "Grade Level"},
-        {"RequirementStatus", "Requirement Status"}
-    }
+                {"Student_ID", "Student ID"},
+                {"StudentName", "Student Name"},
+                {"DOB", "Date of Birth"},
+                {"Sex", "Sex"},
+                {"ParentGuardian", "Parent/Guardian"},
+                {"Section", "Section"},
+                {"GradeLevel", "Grade Level"},
+                {"RequirementStatus", "Requirement Status"}
+            }
 
-            ' Loop through the mapping and update the DataGridView headers.
             For Each kvp As KeyValuePair(Of String, String) In friendlyHeaders
                 If dgvStudent.Columns.Contains(kvp.Key) Then
                     dgvStudent.Columns(kvp.Key).HeaderText = kvp.Value
                 End If
             Next
 
-            ' Apply modern styling to the DataGridView.
             With dgvStudent
                 .Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
                 .AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
@@ -389,11 +397,13 @@ Public Class MainForm
                 .DefaultCellStyle.SelectionForeColor = Color.Black
             End With
 
+            dgvStudent.ResumeLayout()
+
         Catch ex As Exception
             MessageBox.Show("Error loading student data: " & ex.Message)
         Finally
-            ' Ensure the connection is closed.
-            conn.Close()
+            dgvStudent.Enabled = True
+            Me.Cursor = Cursors.Default
         End Try
     End Sub
 
@@ -407,22 +417,16 @@ Public Class MainForm
                 totalRecords = Convert.ToInt32(cmd.ExecuteScalar())
             End Using
 
-            ' Calculate total number of pages, assuming 20 records per page
             Dim totalPages As Integer = Math.Ceiling(totalRecords / 10.0)
 
-            ' Always ensure minimum is 1 and maximum is at least 1
             NumericUpDown1.Minimum = 1
             NumericUpDown1.Maximum = If(totalPages > 0, totalPages, 1)
 
-            ' Make sure current value is within range
             If NumericUpDown1.Value > NumericUpDown1.Maximum Then
                 NumericUpDown1.Value = NumericUpDown1.Maximum
             ElseIf NumericUpDown1.Value < NumericUpDown1.Minimum Then
                 NumericUpDown1.Value = NumericUpDown1.Minimum
             End If
-
-            Debug.WriteLine($"Pagination setup: Total records = {totalRecords}, Total pages = {totalPages}")
-            Debug.WriteLine($"NumericUpDown1: Min = {NumericUpDown1.Minimum}, Max = {NumericUpDown1.Maximum}, Current = {NumericUpDown1.Value}")
 
         Catch ex As Exception
             MessageBox.Show("Error getting total page count: " & ex.Message)
@@ -432,61 +436,59 @@ Public Class MainForm
     End Sub
 
     Private Sub NumericUpDown1_ValueChanged(sender As Object, e As EventArgs) Handles NumericUpDown1.ValueChanged
-        ' Get the selected page from NumericUpDown and call LoadStudentData with it
         Dim selectedPage As Integer = Convert.ToInt32(NumericUpDown1.Value)
-        Debug.WriteLine($"NumericUpDown1 value changed to: {selectedPage}")
         LoadStudentData(selectedPage)
     End Sub
 
-    Private Sub LoadTeacherData(Optional page As Integer = 1)
+    Private Async Sub LoadTeacherData(Optional page As Integer = 1)
+        Me.Cursor = Cursors.WaitCursor
+        dgvTeachers.Enabled = False
+
         Try
-            ' Open MySQL connection using your existing opencon() method.
-            opencon(db_name)
+            Dim dt As DataTable = Await Task.Run(Function()
+                                                     Dim pageSize As Integer = 10
+                                                     Dim offset As Integer = (page - 1) * pageSize
+                                                     Dim dataTable As New DataTable()
 
-            Dim pageSize As Integer = 20
-            Dim offset As Integer = (page - 1) * pageSize
+                                                     Using connection As New MySqlConnection(GetConnectionString())
+                                                         connection.Open()
+                                                         Dim query As String = "SELECT " &
+                        "t.Teacher_ID, " &
+                        "t.Fname, " &
+                        "t.Lname, " &
+                        "t.Contact_info, " &
+                        "GROUP_CONCAT(DISTINCT s.Subject_Name SEPARATOR ', ') AS SubjectsTaught " &
+                        "FROM teacher t " &
+                        "LEFT JOIN taught_by tb ON t.Teacher_ID = tb.Teacher_ID " &
+                        "LEFT JOIN subject s ON tb.Subject_ID = s.Subject_ID " &
+                        "GROUP BY t.Teacher_ID " &
+                        "ORDER BY t.Teacher_ID " &
+                        "LIMIT " & pageSize & " OFFSET " & offset
 
-            ' SQL query with joins to get teacher details, contact info, and the subjects they teach.
-            ' GROUP_CONCAT is used to combine all subjects for a teacher into one comma‐separated string.
-            Dim query As String = "SELECT " &
-            "t.Teacher_ID, " &
-            "CONCAT(t.Lname, ', ', t.Fname, ' ', t.Midname) AS TeacherName, " &
-            "t.Sex, " &
-            "t.Contact_Info AS ContactInfo, " &
-            "GROUP_CONCAT(sub.Subject_Name SEPARATOR ', ') AS SubjectsTaught " &
-            "FROM teacher t " &
-            "LEFT JOIN taught_by tb ON t.Teacher_ID = tb.Teacher_ID " &
-            "LEFT JOIN subject sub ON tb.Subject_ID = sub.Subject_ID " &
-            "GROUP BY t.Teacher_ID " &
-            "ORDER BY t.Teacher_ID " &
-            "LIMIT " & pageSize & " OFFSET " & offset
+                                                         Using adapter As New MySqlDataAdapter(query, connection)
+                                                             adapter.Fill(dataTable)
+                                                         End Using
+                                                     End Using
+                                                     Return dataTable
+                                                 End Function)
 
-            Dim dt As New DataTable()
-            Using adapter As New MySqlDataAdapter(query, conn)
-                adapter.Fill(dt)
-            End Using
-
-            ' Bind the DataTable as the DataSource for dgvTeachers.
+            dgvTeachers.SuspendLayout()
             dgvTeachers.DataSource = dt
 
-            ' Map the original column names to user-friendly headers.
-            Dim friendlyHeaders As New Dictionary(Of String, String) From {
-            {"Teacher_ID", "Teacher ID"},
-            {"TeacherName", "Teacher Name"},
-            {"DOB", "Date of Birth"},
-            {"Sex", "Sex"},
-            {"ContactInfo", "Contact Information"},
-            {"SubjectsTaught", "Subjects Taught"}
-        }
+            Dim teacherHeaders As New Dictionary(Of String, String) From {
+                {"Teacher_ID", "Teacher ID"},
+                {"Fname", "First Name"},
+                {"Lname", "Last Name"},
+                {"Contact_info", "Contact Number"},
+                {"SubjectsTaught", "Subjects Taught"}
+            }
 
-            ' Loop through the mapping and update the DataGridView headers.
-            For Each kvp As KeyValuePair(Of String, String) In friendlyHeaders
+            For Each kvp As KeyValuePair(Of String, String) In teacherHeaders
                 If dgvTeachers.Columns.Contains(kvp.Key) Then
                     dgvTeachers.Columns(kvp.Key).HeaderText = kvp.Value
                 End If
             Next
 
-            ' Apply modern styling to the DataGridView.
             With dgvTeachers
                 .Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
                 .AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
@@ -504,11 +506,13 @@ Public Class MainForm
                 .DefaultCellStyle.SelectionForeColor = Color.Black
             End With
 
+            dgvTeachers.ResumeLayout()
+
         Catch ex As Exception
             MessageBox.Show("Error loading teacher data: " & ex.Message)
         Finally
-            ' Ensure the connection is closed.
-            conn.Close()
+            dgvTeachers.Enabled = True
+            Me.Cursor = Cursors.Default
         End Try
     End Sub
 
@@ -551,11 +555,12 @@ Public Class MainForm
                     "INNER JOIN grade_level gl ON s.Grade_Level_ID = gl.Grade_Level_ID " &
                     "GROUP BY gl.Grade_Name"
             ElseIf hasGrade And Not hasSection Then
-                query = "SELECT s.Section_Name AS Section, s.Total_Students AS TotalEnrolled " &
-                    "FROM section s " &
-                    "INNER JOIN grade_level gl ON s.Grade_Level_ID = gl.Grade_Level_ID " &
-                    "WHERE gl.Grade_Name = @GradeLevel " &
-                    "GROUP BY s.Section_Name"
+                query = "SELECT sec.Section_Name AS Section, COUNT(bt.Student_ID) AS TotalEnrolled " &
+                    "FROM section sec " &
+                    "LEFT JOIN belongs_to bt ON sec.Section_ID = bt.Section_ID " &
+                    "WHERE sec.Grade_Level_ID = (SELECT Grade_Level_ID FROM grade_level WHERE Grade_Name = @GradeLevel) " &
+                    "GROUP BY sec.Section_Name " &
+                    "ORDER BY TotalEnrolled DESC LIMIT 10"
             ElseIf hasGrade And hasSection Then
                 query = "SELECT s.Section_Name AS Section, s.Total_Students AS TotalEnrolled " &
                     "FROM section s " &
@@ -563,9 +568,11 @@ Public Class MainForm
                     "WHERE gl.Grade_Name = @GradeLevel AND s.Section_Name = @Section " &
                     "GROUP BY s.Section_Name"
             Else
-                query = "SELECT s.Section_Name AS Section, s.Total_Students AS TotalEnrolled " &
-                    "FROM section s " &
-                    "GROUP BY s.Section_Name"
+                query = "SELECT sec.Section_Name AS Section, COUNT(bt.Student_ID) AS TotalEnrolled " &
+                    "FROM section sec " &
+                    "LEFT JOIN belongs_to bt ON sec.Section_ID = bt.Section_ID " &
+                    "WHERE sec.Section_Name = @Section " &
+                    "GROUP BY sec.Section_Name"
             End If
 
             Dim cmd As New MySqlCommand(query, conn)
@@ -659,7 +666,7 @@ Public Class MainForm
             If Not hasGrade AndAlso Not hasSection Then
                 titleText = "Total Enrollment by Grade Level"
             ElseIf hasGrade And Not hasSection Then
-                titleText = "Enrollment by Section for Grade " & gradeFilter
+                titleText = "Top 10 Sections by Enrollment for Grade " & gradeFilter
             ElseIf hasGrade And hasSection Then
                 titleText = "Enrollment for Grade " & gradeFilter & ", Section " & sectionFilter
             Else
@@ -715,36 +722,38 @@ Public Class MainForm
         End Try
     End Sub
 
-
-
-    Private Sub LoadSections(Optional ByVal gradeFilter As String = "")
+    Private Sub LoadSections(ByVal cmbGrade As ComboBox, ByVal cmbSec As ComboBox)
         Try
             opencon(db_name)
             Dim dt As New DataTable()
-            Dim query As String = ""
+            Dim query As String
 
-            If String.IsNullOrEmpty(gradeFilter) OrElse gradeFilter = "All" Then
-                query = "SELECT DISTINCT Section_Name FROM section ORDER BY Section_Name"
-            Else
+            If cmbGrade.SelectedIndex > 0 AndAlso cmbGrade.SelectedItem IsNot Nothing Then
                 query = "SELECT s.Section_Name FROM section s " &
                     "INNER JOIN grade_level gl ON s.Grade_Level_ID = gl.Grade_Level_ID " &
                     "WHERE gl.Grade_Name = @GradeLevel ORDER BY s.Section_Name"
+            Else
+                query = "SELECT DISTINCT Section_Name FROM section ORDER BY Section_Name"
             End If
 
-            Dim cmd As New MySqlCommand(query, conn)
-            If Not String.IsNullOrEmpty(gradeFilter) AndAlso gradeFilter <> "All" Then
-                cmd.Parameters.AddWithValue("@GradeLevel", gradeFilter)
-            End If
+            Using cmd As New MySqlCommand(query, conn)
+                If cmbGrade.SelectedIndex > 0 AndAlso cmbGrade.SelectedItem IsNot Nothing Then
+                    cmd.Parameters.AddWithValue("@GradeLevel", cmbGrade.SelectedItem.ToString())
+                End If
 
-            Dim adapter As New MySqlDataAdapter(cmd)
-            adapter.Fill(dt)
+                Using adapter As New MySqlDataAdapter(cmd)
+                    adapter.Fill(dt)
+                End Using
+            End Using
 
-            cmbSection.Items.Clear()
-            cmbSection.Items.Add("All")  ' "All" for no filtering
+            cmbSec.Items.Clear()
+            cmbSec.Items.Add("All")
 
             For Each row As DataRow In dt.Rows
-                cmbSection.Items.Add(row("Section_Name").ToString())
+                cmbSec.Items.Add(row("Section_Name").ToString())
             Next
+
+            cmbSec.SelectedIndex = 0
 
         Catch ex As Exception
             MessageBox.Show("Error loading sections: " & ex.Message)
@@ -753,21 +762,27 @@ Public Class MainForm
         End Try
     End Sub
 
-
-    Private Sub LoadGradeLevels()
+    Private Sub LoadGradeLevels(ByVal cmb As ComboBox)
         Try
             opencon(db_name)
             Dim dt As New DataTable()
             Dim query As String = "SELECT DISTINCT Grade_Name FROM grade_level ORDER BY Grade_Name"
-            Dim adapter As New MySqlDataAdapter(query, conn)
-            adapter.Fill(dt)
 
-            cmbGradeLevel.Items.Clear()
-            cmbGradeLevel.Items.Add("All")  ' "All" for no filtering
+            Using cmd As New MySqlCommand(query, conn)
+                Using adapter As New MySqlDataAdapter(cmd)
+                    adapter.Fill(dt)
+                End Using
+            End Using
+
+            cmb.Items.Clear()
+            cmb.Items.Add("All")
 
             For Each row As DataRow In dt.Rows
-                cmbGradeLevel.Items.Add(row("Grade_Name").ToString())
+                cmb.Items.Add(row("Grade_Name").ToString())
             Next
+
+            cmb.SelectedIndex = 0
+
         Catch ex As Exception
             MessageBox.Show("Error loading grade levels: " & ex.Message)
         Finally
@@ -775,12 +790,13 @@ Public Class MainForm
         End Try
     End Sub
 
-
+    Private Sub InitializeGradeLevels()
+        LoadGradeLevels(cmbGradeLevel)
+    End Sub
 
     ' When grade level changes, reload sections to match the selected grade.
     Private Sub cmbGradeLevel_SelectedIndexChanged(sender As Object, e As EventArgs) Handles cmbGradeLevel.SelectedIndexChanged
-        Dim selectedGrade As String = cmbGradeLevel.SelectedItem.ToString()
-        LoadSections(selectedGrade)
+        LoadSections(cmbGradeLevel, cmbSection)
         LoadEnrollmentChart()
     End Sub
 
@@ -791,6 +807,88 @@ Public Class MainForm
 
     Private Sub MenuStrip1_ItemClicked(sender As Object, e As ToolStripItemClickedEventArgs) Handles MenuStrip1.ItemClicked
 
+    End Sub
+
+    Private Sub BackUpDatabaseToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles BackUpDatabaseToolStripMenuItem.Click
+        Dim saveFileDialog As New SaveFileDialog()
+        saveFileDialog.Filter = "SQL Dump File (*.sql)|*.sql|All files (*.*)|*.*"
+        saveFileDialog.Title = "Save Database Backup"
+        saveFileDialog.FileName = "mces_backup_" & DateTime.Now.ToString("yyyyMMdd_HHmmss") & ".sql"
+
+        If saveFileDialog.ShowDialog() = DialogResult.OK Then
+            Dim filePath As String = saveFileDialog.FileName
+            Try
+                Dim process As New Process()
+                process.StartInfo.FileName = "C:\xampp3\mysql\bin\mysqldump.exe"
+                process.StartInfo.ArgumentList.Add("--host=" & db_server)
+                process.StartInfo.ArgumentList.Add("--user=" & db_uid)
+                process.StartInfo.ArgumentList.Add("--password=" & db_pwd)
+                process.StartInfo.ArgumentList.Add("--databases")
+                process.StartInfo.ArgumentList.Add(db_name)
+                process.StartInfo.ArgumentList.Add("--routines")
+                process.StartInfo.ArgumentList.Add("--events")
+                process.StartInfo.UseShellExecute = False
+                process.StartInfo.RedirectStandardOutput = True
+                process.StartInfo.RedirectStandardError = True
+                process.StartInfo.CreateNoWindow = True
+                process.Start()
+
+                Using writer As New System.IO.StreamWriter(filePath)
+                    writer.Write(process.StandardOutput.ReadToEnd())
+                End Using
+
+                Dim errorOutput As String = process.StandardError.ReadToEnd()
+                process.WaitForExit()
+
+                If process.ExitCode = 0 Then
+                    MessageBox.Show("Database backup completed successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                Else
+                    MessageBox.Show("Backup failed: " & errorOutput, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                End If
+            Catch ex As Exception
+                MessageBox.Show("An error occurred during backup: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            End Try
+        End If
+    End Sub
+
+    Private Sub LoadFileToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles LoadFileToolStripMenuItem.Click
+        Dim openFileDialog As New OpenFileDialog()
+        openFileDialog.Filter = "SQL Dump File (*.sql)|*.sql|All files (*.*)|*.*"
+        openFileDialog.Title = "Restore Database from Backup"
+
+        If openFileDialog.ShowDialog() = DialogResult.OK Then
+            Dim filePath As String = openFileDialog.FileName
+            Try
+                Dim process As New Process()
+                process.StartInfo.FileName = "C:\xampp3\mysql\bin\mysql.exe"
+                process.StartInfo.ArgumentList.Add("--host=" & db_server)
+                process.StartInfo.ArgumentList.Add("--user=" & db_uid)
+                process.StartInfo.ArgumentList.Add("--password=" & db_pwd)
+                process.StartInfo.ArgumentList.Add(db_name)
+                process.StartInfo.UseShellExecute = False
+                process.StartInfo.RedirectStandardInput = True
+                process.StartInfo.RedirectStandardOutput = True
+                process.StartInfo.RedirectStandardError = True
+                process.StartInfo.CreateNoWindow = True
+                process.Start()
+
+                Using reader As New System.IO.StreamReader(filePath)
+                    process.StandardInput.Write(reader.ReadToEnd())
+                    process.StandardInput.Close()
+                End Using
+
+                Dim errorOutput As String = process.StandardError.ReadToEnd()
+                process.WaitForExit()
+
+                If process.ExitCode = 0 Then
+                    MessageBox.Show("Database restore completed successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                Else
+                    MessageBox.Show("Restore failed: " & errorOutput, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                End If
+            Catch ex As Exception
+                MessageBox.Show("An error occurred during restore: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            End Try
+        End If
     End Sub
 
     Private Sub DashboardToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles DashboardToolStripMenuItem.Click
@@ -812,8 +910,8 @@ Public Class MainForm
         SetTeacherPagingLimits()
         LoadTeacherData(1)
 
-        LoadSections()
-        LoadGradeLevels()
+        LoadGradeLevels(cmbGradeLevel)
+        LoadSections(cmbGradeLevel, cmbSection)
         LoadEnrollmentChart()
 
 
@@ -826,6 +924,80 @@ Public Class MainForm
             currentControl.Hide()
         End If
 
+    End Sub
+
+    Private Sub EnrollmentListToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles EnrollmentListToolStripMenuItem.Click
+        pnlReportConfig.Visible = True
+        LoadGradeLevels(cmbReportGradeLevel)
+    End Sub
+
+    Private Sub btnCloseReportPanel_Click(sender As Object, e As EventArgs) Handles btnCloseReportPanel.Click
+        pnlReportConfig.Visible = False
+    End Sub
+
+    Private Sub btnGenerateReport_Click(sender As Object, e As EventArgs) Handles btnGenerateReport.Click
+        Dim gradeLevel As String = If(cmbReportGradeLevel.SelectedItem IsNot Nothing AndAlso cmbReportGradeLevel.SelectedIndex > 0, cmbReportGradeLevel.SelectedItem.ToString(), "All")
+        Dim section As String = If(cmbReportSection.SelectedItem IsNot Nothing AndAlso cmbReportSection.SelectedIndex > 0, cmbReportSection.SelectedItem.ToString(), "All")
+
+        Try
+            opencon(db_name)
+
+            Dim query As String = "SELECT g.Grade_Name, sec.Section_Name, COUNT(s.Student_ID) AS TotalStudents " &
+                                  "FROM student s " &
+                                  "JOIN belongs_to b ON s.Student_ID = b.Student_ID " &
+                                  "JOIN section sec ON b.Section_ID = sec.Section_ID " &
+                                  "JOIN grade_level g ON s.Grade_Level_ID = g.Grade_Level_ID "
+
+            Dim groupBy As String = " GROUP BY g.Grade_Name, sec.Section_Name ORDER BY g.Grade_Name, sec.Section_Name"
+
+            Dim conditions As New List(Of String)
+            If gradeLevel <> "All" Then
+                conditions.Add("g.Grade_Name = @GradeLevel")
+            End If
+            If section <> "All" Then
+                conditions.Add("sec.Section_Name = @Section")
+            End If
+
+            If conditions.Count > 0 Then
+                query &= " WHERE " & String.Join(" AND ", conditions)
+            End If
+
+            query &= groupBy
+
+            Dim cmd As New MySqlCommand(query, conn)
+            If gradeLevel <> "All" Then
+                cmd.Parameters.AddWithValue("@GradeLevel", gradeLevel)
+            End If
+            If section <> "All" Then
+                cmd.Parameters.AddWithValue("@Section", section)
+            End If
+
+            Dim adapter As New MySqlDataAdapter(cmd)
+            Dim dt As New DataTable()
+            adapter.Fill(dt)
+
+            conn.Close()
+
+            If dt.Rows.Count = 0 Then
+                MessageBox.Show("No data found for the selected filters.", "No Results", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                Return
+            End If
+
+            ' Create and show the report viewer form
+            Dim reportForm As New ReportViewerForm(dt)
+            reportForm.ShowDialog()
+
+        Catch ex As Exception
+            MessageBox.Show("An error occurred while generating the report: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        Finally
+            If conn.State = ConnectionState.Open Then
+                conn.Close()
+            End If
+        End Try
+    End Sub
+
+    Private Sub cmbReportGradeLevel_SelectedIndexChanged(sender As Object, e As EventArgs) Handles cmbReportGradeLevel.SelectedIndexChanged
+        LoadSections(cmbReportGradeLevel, cmbReportSection)
     End Sub
 
 
